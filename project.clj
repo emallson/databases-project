@@ -6,7 +6,8 @@
                  [compojure "1.1.9"]
                  [org.clojure/data.json "0.2.5"]
                  [org.clojure/java.jdbc "0.3.6"]
-                 [mysql/mysql-connector-java "5.1.25"]]
+                 [mysql/mysql-connector-java "5.1.25"]
+                 [http-kit "2.1.16"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler databases-project.handler/app}
   :profiles
