@@ -53,8 +53,8 @@
            (max last-update (get update-times realm)))))
 
 (defn get-character-info
-  "Get list of files containing auction data for a realm."
-  [realm pname]
-  (http/get (str "https://us.api.battle.net/wow/character/" realm "/" pname)
-            {:query-params {:apikey api-key,
-                            :locale locale}}))
+	"Gets realm, name and faction from online API"
+	[name]
+	(http/get (str "https://us.api.battle.net/wow/character/Korgath/" name ))
+	{:query-params {:apikey api-key,
+        		:locale locale}})
