@@ -16,11 +16,6 @@
   (-> @(http/get url)
       :body json/read-str (get "auctions")))
 
-(def insert-stmt
-  (jdbc/prepare-statement (jdbc/get-connection db-info)
-                          "INSERT INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID)
-                                        VALUES (?,      ?,        ?,        ?,        ?,           ?,        ?,        ?,     ?,       ?);"))
-
 (defmacro defstmt
   "Define a prepared statement with a name which acts like a function. Use
   {field-name} rather than ? in your SQL definition."
