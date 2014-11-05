@@ -26,13 +26,13 @@
                                   p))
                              (re-seq #"\{(\w+)\}" stmt-value))
         stmt (clojure.string/replace stmt-value #"\{\w+\}" "?")]
-    `(do
-       (def pstmt# (jdbc/prepare-statement (or (jdbc/db-find-connection db-info)
-                                               (jdbc/get-connection db-info))
-                                           ~stmt))
+    `(let [pstmt# (jdbc/prepare-statement (or (jdbc/db-find-connection db-info)
+                                              (jdbc/get-connection db-info))
+                                          ~stmt)]
        (defn ~stmt-name
-          [param-map#]
-          (jdbc/db-do-prepared ~db-info true pstmt# (select-keys param-map# ~stmt-parameters))))))
+         [param-map#]
+         (jdbc/db-do-prepared ~db-info true pstmt# (reduce #(conj %1 (get param-map# %2)) [] [~@stmt-parameters]))))))
+
 ;;; MACRO NEEDS TESTING
 (defstmt insert-auction db-info
   "INSERT INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID)
@@ -51,4 +51,3 @@
          (map #(map insert-auction %)))
     (assoc update-times realm
            (max last-update (get update-times realm)))))
-
