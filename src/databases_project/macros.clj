@@ -3,18 +3,25 @@
 
 (defmacro defstmt
   "Define a prepared statement with a name which acts like a function. Use
-  {field-name} rather than ? in your SQL definition."
-  [stmt-name db-info stmt-value]
+  {field-key} rather than ? in your SQL definition."
+  [stmt-name db-info stmt-value & {:keys [query? docstring]
+                                   :or {query? false, docstring ""}}]
   (let [stmt-parameters (map #(let [p (second %)]
                                 (if (= (first p) \:)
-                                  (symbol p)
+                                  (keyword (apply str (rest p)))
                                   p))
-                             (re-seq #"\{(\w+)\}" stmt-value))
-        stmt (clojure.string/replace stmt-value #"\{\w+\}" "?")]
+                             (re-seq #"\{(:?\w+)\}" stmt-value))
+        fn-parameters (map #(if (keyword? %)
+                              (symbol (apply str (rest (str %))))
+                              (symbol %)) stmt-parameters)
+        stmt (clojure.string/replace stmt-value #"\{:?\w+\}" "?")
+        db-fn (if query?
+                `(jdbc/query ~db-info)
+                `(jdbc/db-do-prepared ~db-info true))]
     `(let [pstmt# (jdbc/prepare-statement (or (jdbc/db-find-connection ~db-info)
                                               (jdbc/get-connection ~db-info))
                                           ~stmt)]
        (defn ~stmt-name
-         [~'param-map]
-         (jdbc/db-do-prepared ~db-info true pstmt#
-                              (reduce #(conj %1 (get ~'param-map %2)) [] [~@stmt-parameters]))))))
+         ~docstring
+         [~(zipmap fn-parameters stmt-parameters)]
+         (~@db-fn pstmt# [~@fn-parameters])))))
