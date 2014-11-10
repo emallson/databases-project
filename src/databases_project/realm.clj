@@ -2,7 +2,8 @@
   (:require [org.httpkit.client :as http]
             [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
-            [databases-project.config :refer [api-key locale db-info]]))
+            [databases-project.config :refer [api-key locale db-info]]
+            [databases-project.macros :refer [defstmt]]))
 
 
 (defn get-realm-basic
@@ -11,14 +12,17 @@
   (http/get (str "https://us.api.battle.net/wow/realm/status")
             {:query-params {:apikey api-key,
                             :locale locale}}))
-(defn get-realm-list
-  [iterat]
-  
-	(-> @(get-realm-basic)
-		:body json/read-str (get-in ["realms" iterat "name"])))
 
 (defn get-realms
-	(for [i (range 10)] (inc i))
-		(get-realm-list i))
+  []
+  (map-indexed (fn [id body] {:id id, :name (get body "name")})
+               (-> @(get-realm-basic)
+                   :body json/read-str
+                   (get "realms"))))
 
+(defstmt insert-realm db-info
+  "INSERT INTO Realm (RealmID, RName) VALUES ({:id}, {:name});")
 
+(defn insert-all-realms
+  []
+  (map insert-realm (get-realms)))
