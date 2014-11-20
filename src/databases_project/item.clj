@@ -26,4 +26,5 @@
   [auction-data]
   (->> auction-data
        (filter #(empty? (get-cached-item %)))
-       (map #(get-item-info (get % "item")))))
+       (map #(get-item-info (get % "item")))
+       (map #(-> @% :body json/read-str))))
