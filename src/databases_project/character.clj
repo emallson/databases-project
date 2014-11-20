@@ -35,7 +35,6 @@
 (defn get-new-character-data
   [auction-data]
   (->> auction-data
-       (map #(select-keys % ["owner", "ownerRealm"]))
-       (filter #(empty? (get-cached-character %))) ;; TODO: test
+       (filter #(empty? (get-cached-character %)))
        (map get-character-info)
        (map #(realm-name->id "realm" (json/read-str (:body @%))))))
