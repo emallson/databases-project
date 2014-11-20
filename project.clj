@@ -10,6 +10,7 @@
                  [http-kit "2.1.16"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler databases-project.handler/app}
+  :main databases-project.auctions
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                         [ring-mock "0.1.5"]]}})

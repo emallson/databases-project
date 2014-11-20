@@ -5,7 +5,6 @@
             [databases-project.config :refer [api-key locale db-info]]
             [databases-project.macros :refer [defstmt]]))
 
-
 (defn get-realm-basic
   "Get list of files containing auction data for a realm."
   []
@@ -23,6 +22,20 @@
 (defstmt insert-realm db-info
   "INSERT INTO Realm (RealmID, RName) VALUES ({:id}, {:name});")
 
-(defn insert-all-realms
-  []
-  (map insert-realm (get-realms)))
+(defn insert-all-realms [] (map insert-realm (get-realms)))
+
+(defstmt get-realm db-info
+  "SELECT RealmID, RName FROM Realm WHERE RName = {:name}"
+  :query? true)
+
+(defn realm-name->id
+  "Replaces the given field on the object `data` with the id of the realm name
+  stored in the field."
+  ([src-field data]
+     (realm-name->id src-field "realmID" data))
+  ([src-field dest-field data]
+     (let [realm-name (get data src-field)]
+       (-> data
+           (dissoc src-field)
+           (assoc dest-field (-> (get-realm {:name realm-name})
+                                 first :realmid))))))

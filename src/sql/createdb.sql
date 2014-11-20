@@ -2,7 +2,7 @@ CREATE TABLE Realm (RealmID INT PRIMARY KEY NOT NULL,
                     RName VARCHAR(30) NOT NULL);
 
 CREATE TABLE PCharacter (CName VARCHAR(12) PRIMARY KEY NOT NULL, -- Max name length is 12
-                        Faction BOOLEAN NOT NULL, -- False Alliance, True Horde
+                        Race INT NOT NULL, -- changed to race b/c that is what API gives us and we can derive faction from race but not visa-versa
                         RealmID INT NOT NULL,
                         FOREIGN KEY(RealmID) REFERENCES Realm(RealmID));
 
