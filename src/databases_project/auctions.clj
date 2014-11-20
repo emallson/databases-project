@@ -4,7 +4,8 @@
             [clojure.java.jdbc :as jdbc]
             [databases-project.config :refer [api-key locale db-info]]
             [databases-project.macros :refer [defstmt]]
-            [databases-project.character :refer [get-new-character-data insert-character]]))
+            [databases-project.character :refer [get-new-character-data insert-character]]
+            [databases-project.item :refer [get-new-item-data insert-item]]))
 
 (defn get-auction-files-for
   "Get list of files containing auction data for a realm."
@@ -13,20 +14,22 @@
             {:query-params {:apikey api-key,
                             :locale locale}}))
 
+(defn get-updated-files-for
+  [realm update-time]
+  (seq (filter #(> (get % "lastModified") update-time)
+               (-> @(get-auction-files-for realm)
+                   :body json/read-str (get "files")))))
+
 (defn get-auction-data-from
-  [url]
-  (-> @(http/get url)
-      :body json/read-str (get "auctions")))
-
-(defn get-auction-data
-  [urls]
+  [file-list]
   (->> file-list
-       (filter #(> (get % "lastModified")
-                   (get update-times realm)))
-       (map #(get-auction-data-from (get % "url")))
-       (reduce into {})))
-
-
+       (map #(get % "url"))
+       (map (fn [url]
+              (-> @(http/get url)
+                  :body json/read-str
+                  (get "auctions")
+                  (get "auctions"))))
+       (reduce into [])))
 
 (defstmt insert-auction db-info
   "INSERT INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID)
@@ -35,12 +38,14 @@
 (defn update-realm!
   "Checks to see if a realm needs updating and, if so, updates it."
   [realm update-times]
-  (let [file-list (-> @(get-auction-files-for realm)
-                      :body json/read-str (get "files")),
-        last-update (apply max (map #(get % "lastModified") file-list)),
-        auction-data (get-auction-data file-list)
-        new-character-data (get-new-character-data auction-data)]
-    (map insert-character new-character-data)
-    (map insert-auction auction-data)
-    (assoc update-times realm
-           (max last-update (get update-times realm)))))
+  (if-let [file-list (get-updated-files-for realm (get update-times realm 0))]
+    (let [last-update (apply max (map #(get % "lastModified") file-list)),
+          auction-data (get-auction-data-from file-list),
+          new-character-data (get-new-character-data auction-data),
+          new-item-data (get-new-item-data auction-data)]
+      (map insert-character new-character-data)
+      (map insert-item new-item-data)
+      (map insert-auction auction-data)
+      (assoc update-times realm
+             (max last-update (get update-times realm 0))))
+    update-times))
