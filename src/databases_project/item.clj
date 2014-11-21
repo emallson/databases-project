@@ -25,6 +25,8 @@
 (defn get-new-item-data
   [auction-data]
   (->> auction-data
-       (filter #(empty? (get-cached-item %)))
-       (map #(get-item-info (get % "item")))
+       (map #(get % "item"))
+       distinct
+       (filter #(empty? (get-cached-item {"item" %})))
+       (map #(get-item-info %))
        (map #(-> @% :body json/read-str))))
