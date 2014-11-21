@@ -22,6 +22,24 @@
                {:query-params {:apikey api-key,
                                :locale locale}})))
 
+(defn get-contextual-items
+  "Fetches all context-dependent items listed in a pseudo-item object. If the
+  object is not a pseudo-item, returns a vector holding the object."
+  [item-object]
+  (let [id (get item-object "id")
+        contexts (get item-object "availableContexts")
+        no-contexts (or
+                     (nil? contexts)
+                     (empty? (first contexts)))]
+    (if no-contexts
+      [item-object]
+      (map
+       #(-> @(http/get (str "https://us.api.battle.net/wow/item/" id "/" %)
+                       {:query-params {:apikey api-key,
+                                       :locale locale}})
+            :body json/read-str)
+       contexts))))
+
 (defn get-new-item-data
   [auction-data]
   (->> auction-data
@@ -29,4 +47,7 @@
        distinct
        (filter #(empty? (get-cached-item {"item" %})))
        (map #(get-item-info %))
-       (map #(-> @% :body json/read-str))))
+       (map #(-> @% :body json/read-str))
+       (filter #(not (= (get % "status") "nok")))
+       (map get-contextual-items)
+       (reduce into [])))
