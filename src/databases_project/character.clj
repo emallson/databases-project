@@ -27,14 +27,21 @@
                {:query-params {:apikey api-key,
                                :locale locale}})))
 
-(defn get-character-att
-  [realm pname patt]
-  (-> @(get-character-info realm pname)
-      :body json/read-str (get patt)))
+(defn character-info-or-scrublord
+  "Fetches character data (already deref'd) or returns a map with race -1 to
+  indicate scrublord."
+  [{realm "ownerRealm", pname "owner"}]
+  (let [response @(get-character-info realm pname)
+        char-info (-> response :body json/read-str)]
+    (if (= (get char-info "status") "nok")
+      {"realm" realm, "name" pname, "race" -1}
+      char-info)))
 
 (defn get-new-character-data
   [auction-data]
   (->> auction-data
+       (map #(select-keys % ["owner" "ownerRealm"]))
+       distinct
        (filter #(empty? (get-cached-character %)))
-       (map get-character-info)
-       (map #(realm-name->id "realm" (json/read-str (:body @%))))))
+       (map character-info-or-scrublord)
+       (map #(realm-name->id "realm" %))))
