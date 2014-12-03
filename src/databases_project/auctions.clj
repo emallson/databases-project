@@ -4,6 +4,7 @@
             [clojure.java.jdbc :as jdbc]
             [databases-project.config :refer [api-key locale db-info]]
             [databases-project.macros :refer [defstmt]]
+            [databases-project.realm :refer [realm-name->id]]
             [databases-project.character :refer [get-new-character-data insert-character]]
             [databases-project.item :refer [get-new-item-data insert-item]]))
 
@@ -29,11 +30,12 @@
                   :body json/read-str
                   (get "auctions")
                   (get "auctions"))))
-       (reduce into [])))
+       (reduce into [])
+       (map (partial realm-name->id "ownerRealm"))))
 
 (defstmt insert-auction db-info
   "INSERT INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID)
-                VALUES ({auc}, {quantity}, {buyout}, {bid}, 0, 0, 0, {owner}, 0, {item});")
+                VALUES ({auc}, {quantity}, {buyout}, {bid}, 0, 0, 0, {owner}, {realmID}, {item});")
 
 (defn update-realm!
   "Checks to see if a realm needs updating and, if so, updates it."
