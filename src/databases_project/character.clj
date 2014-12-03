@@ -2,6 +2,7 @@
   (:require [org.httpkit.client :as http]
             [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
+            [taoensso.timbre :as timbre]
             [databases-project.config :refer [api-key locale db-info]]
             [databases-project.macros :refer [defstmt]]
             [databases-project.realm :refer [realm-name->id]]))
@@ -31,17 +32,22 @@
   "Fetches character data (already deref'd) or returns a map with race -1 to
   indicate scrublord."
   [{realm "ownerRealm", pname "owner"}]
+  (timbre/debug (str "trying: " pname "-" realm))
   (let [response @(get-character-info realm pname)
         char-info (-> response :body json/read-str)]
-    (if (= (get char-info "status") "nok")
-      {"realm" realm, "name" pname, "race" -1}
-      char-info)))
+    (timbre/debug char-info)
+    (cond
+     (empty? char-info) {"realm" realm, "name" pname, "race" -2} ; missingno
+     (= (get char-info "status") "nok") {"realm" realm, "name" pname, "race" -1} ; scrublord
+     :else char-info)))
 
 (defn get-new-character-data
   [auction-data]
-  (->> auction-data
-       (map #(select-keys % ["owner" "ownerRealm"]))
-       distinct
-       (filter #(empty? (get-cached-character %)))
-       (map character-info-or-scrublord)
-       (map #(realm-name->id "realm" %))))
+  (let [unique-characters (->> auction-data
+                               (map #(select-keys % ["owner" "ownerRealm"]))
+                               distinct)
+        new-characters (filter #(empty? (get-cached-character %)) unique-characters)]
+    (timbre/info (str (count new-characters) " new characters"))
+    (->> new-characters
+         (map character-info-or-scrublord)
+         (map #(realm-name->id "realm" %)))))

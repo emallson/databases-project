@@ -2,6 +2,7 @@
   (:require [org.httpkit.client :as http]
             [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
+            [taoensso.timbre :as timbre]
             [databases-project.config :refer [api-key locale db-info]]
             [databases-project.macros :refer [defstmt]]))
 
@@ -42,12 +43,14 @@
 
 (defn get-new-item-data
   [auction-data]
-  (->> auction-data
-       (map #(get % "item"))
-       distinct
-       (filter #(empty? (get-cached-item {"item" %})))
-       (map #(get-item-info %))
-       (map #(-> @% :body json/read-str))
-       (filter #(not (= (get % "status") "nok")))
-       (map get-contextual-items)
-       (reduce into [])))
+  (let [new-items (->> auction-data
+                       (map #(get % "item"))
+                       distinct
+                       (filter #(empty? (get-cached-item {"item" %}))))]
+    (timbre/info (str (count new-items) " new items"))
+    (->> new-items
+         (map #(get-item-info %))
+         (map #(-> @% :body json/read-str))
+         (filter #(not (= (get % "status") "nok")))
+         (map get-contextual-items)
+         (reduce into []))))

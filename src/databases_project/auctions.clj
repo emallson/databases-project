@@ -2,6 +2,7 @@
   (:require [org.httpkit.client :as http]
             [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
+            [taoensso.timbre :as timbre]
             [databases-project.config :refer [api-key locale db-info]]
             [databases-project.macros :refer [defstmt]]
             [databases-project.realm :refer [realm-name->id]]
@@ -11,6 +12,7 @@
 (defn get-auction-files-for
   "Get list of files containing auction data for a realm."
   [realm]
+  (timbre/info (str "Fetching files for " realm))
   (http/get (str "https://us.api.battle.net/wow/auction/data/" realm)
             {:query-params {:apikey api-key,
                             :locale locale}}))
@@ -23,6 +25,7 @@
 
 (defn get-auction-data-from
   [file-list]
+  (timbre/info (str "Aggregating auctions from files..."))
   (->> file-list
        (map #(get % "url"))
        (map (fn [url]
@@ -30,8 +33,7 @@
                   :body json/read-str
                   (get "auctions")
                   (get "auctions"))))
-       (reduce into [])
-       (map (partial realm-name->id "ownerRealm"))))
+       (reduce into [])))
 
 (defstmt insert-auction db-info
   "INSERT INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID)
@@ -45,9 +47,17 @@
           auction-data (get-auction-data-from file-list),
           new-character-data (get-new-character-data auction-data),
           new-item-data (get-new-item-data auction-data)]
-      (map insert-character new-character-data)
-      (map insert-item new-item-data)
-      (map insert-auction auction-data)
+      (doseq [datum new-character-data]
+        (timbre/debug "Inserting characters...")
+        (insert-character datum))
+      (doseq [datum new-item-data]
+        (timbre/debug "Inserting items...")
+        (insert-item datum))
+      (doseq [datum auction-data]
+        (timbre/debug "Inserting listings...")
+        (->> datum
+             (realm-name->id "ownerRealm")
+             insert-auction))
       (assoc update-times realm
              (max last-update (get update-times realm 0))))
     update-times))
