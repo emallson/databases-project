@@ -7,14 +7,15 @@
             [databases-project.macros :refer [defstmt]]))
 
 (defstmt insert-item db-info
-  "INSERT INTO Item (ItemID, MaxStack, IName)
-             VALUES ({id}, {stackable}, {name});"
+  "INSERT INTO Item (ItemID, Context, MaxStack, IName)
+             VALUES ({id}, {context}, {stackable}, {name});"
   :docstring "Insert an item received from the B.net API.")
 
 (defstmt get-cached-item db-info
-  "SELECT ItemID, MaxStack, IName FROM Item
+  "SELECT ItemID, Context, MaxStack, IName FROM Item
    WHERE ItemID = {item};"
-  :docstring "Get an item by its ID. Pass in a auction data object."
+  :docstring "Get an item by its ID. Pass in a auction data object. Returns the
+  Item in each available context."
   :query? true)
 
 (defn get-item-info
@@ -25,7 +26,9 @@
 
 (defn get-contextual-items
   "Fetches all context-dependent items listed in a pseudo-item object. If the
-  object is not a pseudo-item, returns a vector holding the object."
+  object is not a pseudo-item, returns a vector holding the object.
+
+  Note that right now we have NO IDEA how to relate Auction.AContext to Item.Context"
   [item-object]
   (let [id (get item-object "id")
         contexts (get item-object "availableContexts")
@@ -33,6 +36,7 @@
                      (nil? contexts)
                      (empty? (first contexts)))]
     (if no-contexts
+      ; note: looks like misplaced fn arglist, but is intended: vector containing single object
       [item-object]
       (map
        #(-> @(http/get (str "https://us.api.battle.net/wow/item/" id "/" %)

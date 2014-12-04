@@ -36,8 +36,8 @@
        (reduce into [])))
 
 (defstmt insert-auction db-info
-  "INSERT INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID)
-                VALUES ({auc}, {quantity}, {buyout}, {bid}, 0, 0, 0, {owner}, {realmID}, {item});")
+  "INSERT INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, Context)
+                VALUES ({auc}, {quantity}, {buyout}, {bid}, 0, 0, 0, {owner}, {realmID}, {item}, {context});")
 
 (defn update-auctions!
   [auction-data]
