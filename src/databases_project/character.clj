@@ -51,3 +51,9 @@
     (->> new-characters
          (map character-info-or-scrublord)
          (map #(realm-name->id "realm" %)))))
+
+(defn update-characters!
+  [auction-data]
+  (doseq [character (get-new-character-data auction-data)]
+    (timbre/debugf "Inserting: %s" character)
+    (insert-character character)))

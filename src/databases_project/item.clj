@@ -42,6 +42,7 @@
        contexts))))
 
 (defn get-new-item-data
+  "Returns a LIST OF LISTS of items."
   [auction-data]
   (let [new-items (->> auction-data
                        (map #(get % "item"))
@@ -52,5 +53,11 @@
          (map #(get-item-info %))
          (map #(-> @% :body json/read-str))
          (filter #(not (= (get % "status") "nok")))
-         (map get-contextual-items)
-         (reduce into []))))
+         (map get-contextual-items))))
+
+(defn update-items!
+  [auction-data]
+  (doseq [item-group (get-new-item-data auction-data)]
+    (doseq [item item-group]
+      (timbre/debugf "Inserting: %s" item)
+      (insert-item item))))

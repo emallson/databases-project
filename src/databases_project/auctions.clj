@@ -6,8 +6,8 @@
             [databases-project.config :refer [api-key locale db-info]]
             [databases-project.macros :refer [defstmt]]
             [databases-project.realm :refer [realm-name->id]]
-            [databases-project.character :refer [get-new-character-data insert-character]]
-            [databases-project.item :refer [get-new-item-data insert-item]]))
+            [databases-project.character :refer [update-characters!]]
+            [databases-project.item :refer [update-items!]]))
 
 (defn get-auction-files-for
   "Get list of files containing auction data for a realm."
@@ -39,25 +39,22 @@
   "INSERT INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID)
                 VALUES ({auc}, {quantity}, {buyout}, {bid}, 0, 0, 0, {owner}, {realmID}, {item});")
 
+(defn update-auctions!
+  [auction-data]
+  (doseq [auction auction-data]
+    (->> auction
+         (realm-name->id "ownerRealm")
+         insert-auction)))
+
 (defn update-realm!
   "Checks to see if a realm needs updating and, if so, updates it."
   [realm update-times]
   (if-let [file-list (get-updated-files-for realm (get update-times realm 0))]
     (let [last-update (apply max (map #(get % "lastModified") file-list)),
-          auction-data (get-auction-data-from file-list),
-          new-character-data (get-new-character-data auction-data),
-          new-item-data (get-new-item-data auction-data)]
-      (doseq [datum new-character-data]
-        (timbre/debug "Inserting characters...")
-        (insert-character datum))
-      (doseq [datum new-item-data]
-        (timbre/debug "Inserting items...")
-        (insert-item datum))
-      (doseq [datum auction-data]
-        (timbre/debug "Inserting listings...")
-        (->> datum
-             (realm-name->id "ownerRealm")
-             insert-auction))
+          auction-data (get-auction-data-from file-list)]
+      (update-characters! auction-data)
+      (update-items! auction-data)
+      (update-auctions! auction-data)
       (assoc update-times realm
              (max last-update (get update-times realm 0))))
     update-times))
