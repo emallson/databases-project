@@ -36,12 +36,13 @@
        (reduce into [])))
 
 (defstmt insert-auction db-info
-  "INSERT INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, Context)
+  "REPLACE INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, AContext)
                 VALUES ({auc}, {quantity}, {buyout}, {bid}, 0, 0, 0, {owner}, {realmID}, {item}, {context});")
 
 (defn update-auctions!
   [auction-data]
   (doseq [auction auction-data]
+    (timbre/debugf "Inserting: %s" auction)
     (->> auction
          (realm-name->id "ownerRealm")
          insert-auction)))

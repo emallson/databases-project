@@ -1,5 +1,6 @@
 (ns databases-project.macros
-  (:require [clojure.java.jdbc :as jdbc]))
+  (:require [clojure.java.jdbc :as jdbc]
+            [taoensso.timbre :as timbre]))
 
 (defmacro defstmt
   "Define a prepared statement with a name which acts like a function. Use

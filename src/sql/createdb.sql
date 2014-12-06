@@ -14,10 +14,10 @@ CREATE TABLE Item (ItemID INT NOT NULL,
                    IName VARCHAR(120) NOT NULL,
                    PRIMARY KEY(ItemID, Context));
 
-CREATE TABLE Listing (ListID INT PRIMARY KEY NOT NULL,
+CREATE TABLE Listing (ListID BIGINT PRIMARY KEY NOT NULL,
                       Quantity INT NOT NULL,
-                      BuyPrice INT, -- allow NULL to indicate no buyout
-                      BidPrice INT NOT NULL,
+                      BuyPrice BIGINT, -- allow NULL to indicate no buyout
+                      BidPrice BIGINT NOT NULL,
                       StartLength INT NOT NULL,
                       TimeLeft INT NOT NULL,
                       PostDate TIMESTAMP NOT NULL,

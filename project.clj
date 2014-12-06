@@ -11,7 +11,7 @@
                  [com.taoensso/timbre "3.3.1"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler databases-project.handler/app}
-  :main databases-project.auctions
+  :main databases-project.main
   :source-paths ["src"]
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                                   [ring-mock "0.1.5"]]}})
