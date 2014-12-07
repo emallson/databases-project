@@ -18,6 +18,11 @@
   Item in each available context."
   :query? true)
 
+(defstmt list-with-prices db-info
+  "SELECT ItemID, IName, Context, MaxStack, MIN(BuyPrice / Quantity) AS MinBuyPrice, AVG(BuyPrice / Quantity) AS AvgBuyPrice FROM Item NATURAL JOIN Listing GROUP BY IName, Context LIMIT 10;"
+  :docstring "Get an item list with normalized prices."
+  :query? true)
+
 (defn get-item-info
   ([item-id]
      (http/get (str "https://us.api.battle.net/wow/item/" item-id)
