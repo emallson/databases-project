@@ -27,6 +27,7 @@ CREATE TABLE Listing (ListID BIGINT PRIMARY KEY NOT NULL,
                        -- not used at this point, eventually will reference
                        -- Item.Context. Relationship is unclear at this point.
                       AContext INT NOT NULL,
+                      ACTIVE SMALLINT NOT NULL,
                       FOREIGN KEY(CName) REFERENCES PCharacter(CName),
                       FOREIGN KEY(RealmID) REFERENCES Realm(RealmID),
                       FOREIGN KEY(ItemID) REFERENCES Item(ItemID));

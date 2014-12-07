@@ -13,7 +13,6 @@
 
 (defsnippet list-item "public/list-item.html" [:tr] [item]
   [:.name] (content (wowhead-link item))
-  [:.context] (content (get item :context))
   [:.stack-size] (html-content (str (get item :maxstack)))
   [:.min-buyout] (html-content (pretty-price (get item :minbuyprice)))
   [:.med-buyout] (html-content (pretty-price (get item :avgbuyprice))))

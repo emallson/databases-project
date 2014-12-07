@@ -3,6 +3,7 @@
   :url "http://example.com/FIXME"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.6.0"]
+                 [overtone/at-at "1.2.0"]
                  [compojure "1.1.9"]
                  [enlive "1.1.5"]
                  [org.clojure/data.json "0.2.5"]
