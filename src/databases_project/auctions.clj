@@ -3,6 +3,8 @@
             [clojure.data.json :as json]
             [clojure.java.jdbc :as jdbc]
             [taoensso.timbre :as timbre]
+            [clj-time.core :as time]
+            [clj-time.format :as tf]
             [databases-project.config :refer [api-key locale db-info]]
             [databases-project.macros :refer [defstmt]]
             [databases-project.realm :refer [realm-name->id get-realm]]
@@ -26,18 +28,29 @@
 (defn get-auction-data-from
   [file-list]
   (timbre/info (str "Aggregating auctions from files..."))
-  (->> file-list
-       (map #(get % "url"))
-       (map (fn [url]
-              (-> @(http/get url)
-                  :body json/read-str
-                  (get "auctions")
-                  (get "auctions"))))
-       (reduce into [])))
+  (try
+    (->> file-list
+         (map #(get % "url"))
+         (map (fn [url]
+                (-> @(http/get url)
+                    :body json/read-str
+                    (get "auctions")
+                    (get "auctions"))))
+         (reduce into []))
+    (catch Exception e (timbre/errorf "Files are moving! Try again soon..."))))
+
+(def time-left-ids (zipmap ["SHORT" "MEDIUM" "LONG" "VERY_LONG"] (range 4)))
+(defn time-left->id
+  [key auction]
+  (assoc auction "timeLeft"
+         (time-left-ids (get auction "timeLeft"))))
 
 (defstmt insert-auction db-info
-  "REPLACE INTO Listing (ListID, Quantity, BuyPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, AContext, Active)
-                VALUES ({auc}, {quantity}, {buyout}, {bid}, 0, 0, 0, {owner}, {realmID}, {item}, {context}, 1);")
+  "INSERT INTO Listing (ListID, Quantity, BuyPrice, OriginalBidPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, AContext, Active)
+                VALUES ({auc}, {quantity}, {buyout}, {bid}, {bid}, {timeLeft}, {timeLeft}, {postDate}, {owner}, {realmID}, {item}, {context}, 1)
+                ON DUPLICATE KEY UPDATE
+                   BidPrice = VALUES(BidPrice),
+                   TimeLeft = VALUES(TimeLeft);")
 
 (defstmt deactivate-auctions db-info
   "UPDATE Listing SET Active = 0 WHERE RealmID = {realmid};"
@@ -47,9 +60,14 @@
   [auction-data]
   (doseq [auction auction-data]
     (timbre/debugf "Inserting: %s" auction)
-    (->> auction
-         (realm-name->id "ownerRealm")
-         insert-auction)))
+    (let [transformed-auction (assoc (->> auction
+                                          (realm-name->id "ownerRealm")
+                                          (time-left->id "timeLeft"))
+                                "postDate" (tf/unparse (tf/formatters :mysql) (time/now)))]
+      (try
+        (insert-auction transformed-auction)
+        (catch Exception e (timbre/errorf e "Insertion failed for: %s (Transformed to %s)"
+                                          auction transformed-auction))))))
 
 (defn update-realm!
   "Checks to see if a realm needs updating and, if so, updates it."
@@ -57,6 +75,7 @@
   (if-let [file-list (get-updated-files-for realm (get update-times realm 0))]
     (let [last-update (apply max (map #(get % "lastModified") file-list)),
           auction-data (get-auction-data-from file-list)]
+      (timbre/infof "Beginning update...")
       (update-characters! auction-data)
       (update-items! auction-data)
       (deactivate-auctions {"realmid" (get-realm {:name realm})})

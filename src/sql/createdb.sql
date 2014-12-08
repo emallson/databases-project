@@ -17,6 +17,7 @@ CREATE TABLE Item (ItemID INT NOT NULL,
 CREATE TABLE Listing (ListID BIGINT PRIMARY KEY NOT NULL,
                       Quantity INT NOT NULL,
                       BuyPrice BIGINT, -- allow NULL to indicate no buyout
+                      OriginalBidPrice BIGINT NOT NULL,
                       BidPrice BIGINT NOT NULL,
                       StartLength INT NOT NULL,
                       TimeLeft INT NOT NULL,

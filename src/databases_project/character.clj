@@ -39,6 +39,7 @@
     (cond
      (empty? char-info) {"realm" realm, "name" pname, "race" -2} ; missingno
      (= (get char-info "status") "nok") {"realm" realm, "name" pname, "race" -1} ; scrublord
+     (not= (get char-info "name") pname) (assoc char-info "name" pname) ; character has been renamed but auction still has old name
      :else char-info)))
 
 (defn get-new-character-data
@@ -47,7 +48,7 @@
                                (map #(select-keys % ["owner" "ownerRealm"]))
                                distinct)
         new-characters (filter #(empty? (get-cached-character %)) unique-characters)]
-    (timbre/info (str (count new-characters) " new characters"))
+    (timbre/infof "%d new characters" (count new-characters))
     (->> new-characters
          (map character-info-or-scrublord)
          (map #(realm-name->id "realm" %)))))
