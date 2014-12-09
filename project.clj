@@ -10,12 +10,15 @@
                  [org.clojure/java.jdbc "0.3.6"]
                  [mysql/mysql-connector-java "5.1.25"]
                  [http-kit "2.1.16"]
-                 [com.taoensso/timbre "3.3.1"]
-                 [clj-time "0.5.1"]]
+                 [com.taoensso/timbre "3.3.1" :exclusions [org.clojure/tools.reader]]
+                 [clj-time "0.6.0"]]
   :plugins [[lein-ring "0.8.12"]]
-  :ring {:handler databases-project.handler/app}
+  :ring {:handler databases-project.handler/app
+         :port 3000}
   :aot :all
   :main databases-project.main
   :source-paths ["src"]
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
-                                  [ring-mock "0.1.5"]]}})
+                                  [ring-mock "0.1.5"]]}
+             :ring {:uberjar-name "wow-ring.jar"}
+             :updater {:uberjar-name "wow-updater.jar"}})
