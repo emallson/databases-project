@@ -51,6 +51,22 @@
             :body json/read-str)
        contexts))))
 
+(def unobtainium-template
+  {"id" 0,
+   "context" "",
+   "name" "Unobtainium",
+   "stackable" 0})
+
+(defn get-item-or-unobtainium
+  "Total hack to get around non-existent (no longer available) items."
+  [item-id]
+  (let [response @(get-item-info item-id)
+        item-info (-> response :body json/read-str)]
+    (cond
+     (= (get item-info "status") "nok") (assoc unobtainium-template
+                                          "id" item-id) ; unobtainable item
+     :else item-info)))
+
 (defn get-new-item-data
   "Returns a LIST OF LISTS of items."
   [auction-data]
@@ -60,9 +76,7 @@
                        (filter #(empty? (get-cached-item {"item" %}))))]
     (timbre/info (str (count new-items) " new items"))
     (->> new-items
-         (map #(get-item-info %))
-         (map #(-> @% :body json/read-str))
-         (filter #(not (= (get % "status") "nok")))
+         (map #(get-item-or-unobtainium %))
          (map get-contextual-items))))
 
 (defn update-items!

@@ -52,22 +52,16 @@
                    BidPrice = VALUES(BidPrice),
                    TimeLeft = VALUES(TimeLeft);")
 
-(defstmt deactivate-auctions db-info
+(defstmt deactivate-auctions! db-info
   "UPDATE Listing SET Active = 0 WHERE RealmID = {realmid};"
   :docstring "Mark all auctions for a realm inactive. Auctions will be reactivated afterwards if they are still up.")
 
 (defn update-auctions!
   [auction-data]
-  (doseq [auction auction-data]
-    (timbre/debugf "Inserting: %s" auction)
-    (let [transformed-auction (assoc (->> auction
-                                          (realm-name->id "ownerRealm")
-                                          (time-left->id "timeLeft"))
-                                "postDate" (tf/unparse (tf/formatters :mysql) (time/now)))]
-      (try
-        (insert-auction transformed-auction)
-        (catch Exception e (timbre/errorf e "Insertion failed for: %s (Transformed to %s)"
-                                          auction transformed-auction))))))
+  (apply insert-auction (map #(timbre/spy (assoc (->> %
+                                                      (realm-name->id "ownerRealm")
+                                                      (time-left->id "timeLeft"))
+                                            "postDate" (tf/unparse (tf/formatters :mysql) (time/now)))) auction-data)))
 
 (defn update-realm!
   "Checks to see if a realm needs updating and, if so, updates it."
@@ -78,9 +72,11 @@
       (timbre/infof "Beginning update...")
       (update-characters! auction-data)
       (update-items! auction-data)
-      (deactivate-auctions {"realmid" (get-realm {:name realm})})
+      (deactivate-auctions! {"realmid" (get-realm {:name realm})})
       (update-auctions! auction-data)
       (timbre/infof "Done updating %s" realm)
       (assoc update-times realm
              (max last-update (get update-times realm 0))))
-    update-times))
+    (do
+      (timbre/infof "No new files for %s" realm)
+      update-times)))

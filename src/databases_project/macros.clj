@@ -17,13 +17,17 @@
                               (symbol %)) stmt-parameters)
         stmt (clojure.string/replace stmt-value #"\{:?\w+\}" "?")
         db-fn (if query?
-                `(jdbc/query
-                  ~db-info [~'pstmt ~@fn-parameters])
-                `(jdbc/db-do-prepared ~db-info true ~'pstmt [~@fn-parameters]))]
+                `(defn ~stmt-name
+                   ~docstring
+                   [~(zipmap fn-parameters stmt-parameters)]
+                   (jdbc/query
+                    ~db-info [~'pstmt ~@fn-parameters]))
+                `(defn ~stmt-name
+                   ~docstring
+                   [& ~'groups]
+                   (apply (partial jdbc/db-do-prepared ~db-info true ~'pstmt)
+                          (map #(map % [~@stmt-parameters]) ~'groups))))]
     `(let [~'pstmt (jdbc/prepare-statement (or (jdbc/db-find-connection ~db-info)
                                               (jdbc/get-connection ~db-info))
-                                          ~stmt)]
-       (defn ~stmt-name
-         ~docstring
-         [~(zipmap fn-parameters stmt-parameters)]
-         ~db-fn))))
+                                           ~stmt)]
+       ~db-fn)))
