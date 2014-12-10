@@ -3,24 +3,29 @@
             [databases-project.macros :refer [defstmt]]
             [databases-project.config :refer [api-key locale db-info]]))
 
-(defn pretty-price [value]
-  (str
-   (int (/ value 10000)) "<span class=\"gold\">g</span> "
-   (int (mod (/ value 100) 100)) "<span class=\"silver\">s</span> "
-   (int (mod value 100)) "<span class=\"copper\">c</span>"))
+(defsnippet pretty-price "public/pretty-price.html" [:span :span] [price]
+  [:.gold] (prepend (-> price
+                     (/ 10000) int str))
+  [:.silver] (prepend (-> price
+                          (/ 100) (mod 100) int str))
+  [:.copper] (prepend (-> price
+                          (mod 100) int str)))
 
 (defsnippet wowhead-link "public/wowhead-link.html" [:a] [item]
-  [:a] (set-attr :href (format "http://www.wowhead.com/item=%d" (get item :itemid)))
-  [:a] (content (str "[" (get item :iname) "]")))
+  [:a] (do->
+        (set-attr :href (format "http://www.wowhead.com/item=%d" (get item :itemid)))
+        (content (str "[" (get item :iname) "]"))))
 
 (defsnippet list-item "public/list-item.html" [:tr] [item]
   [:.name] (content (wowhead-link item))
-  [:.stack-size] (html-content (str (get item :maxstack)))
-  [:.min-buyout] (html-content (pretty-price (get item :minbuyprice)))
-  [:.med-buyout] (html-content (pretty-price (get item :avgbuyprice))))
+  [:.stack-size] (content (str (get item :maxstack)))
+  [:.min-buyout] (content (pretty-price (get item :minbuyprice)))
+  [:.med-buyout] (content (pretty-price (get item :avgbuyprice))))
 
 (deftemplate item-list "public/list.html" [headers contents]
   [:.table :tbody] (clone-for [el contents] (content (list-item el))))
+
+(deftemplate character-list "public/list.html" [headers contents])
 
 (defstmt get-player-listings db-info
     "SELECT * FROM Listings
@@ -65,5 +70,3 @@
     WHERE ItemId = {item} and RName = {itemRealm} and Active = 1 and BuyPrice = MIN(BuyPrice);"
     :docstring "Finds all items currently under the minimum buyprice."
     :query? true)
-
-
