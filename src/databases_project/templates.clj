@@ -19,13 +19,13 @@
         (content (str "[" (get item :iname) "]"))))
 
 (defsnippet list-item "public/list-item.html" [:tr] [item]
-  [:head] (append (header-base))
   [:.name] (content (wowhead-link item))
   [:.stack-size] (content (str (get item :maxstack)))
   [:.min-buyout] (content (pretty-price (get item :minbuyprice)))
   [:.med-buyout] (content (pretty-price (get item :avgbuyprice))))
 
 (deftemplate item-list "public/list.html" [headers contents]
+  [:head] (append (header-base))
   [:.table :tbody] (clone-for [el contents] (content (list-item el))))
 
 (defsnippet get-characters "public/get-character.html" [:tr] [character]
