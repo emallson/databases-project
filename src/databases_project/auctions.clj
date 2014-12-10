@@ -30,12 +30,13 @@
   (timbre/info (str "Aggregating auctions from files..."))
   (try
     (->> file-list
-         (map #(get % "url"))
-         (map (fn [url]
-                (-> @(http/get url)
-                    :body json/read-str
-                    (get "auctions")
-                    (get "auctions"))))
+         (map (fn [{url "url", post-date "lastModified"}]
+                (map
+                 #(assoc % "postDate" post-date)
+                 (-> @(http/get url)
+                     :body json/read-str
+                     (get "auctions")
+                     (get "auctions")))))
          (reduce into []))
     (catch Exception e (timbre/errorf "Files are moving! Try again soon..."))))
 
@@ -43,14 +44,20 @@
 (defn time-left->id
   [key auction]
   (assoc auction "timeLeft"
-         (time-left-ids (get auction "timeLeft"))))
+         (time-left-ids (get auction key))))
+
+(defn post-date->fmt
+  [key auction]
+  (assoc auction "postDate"
+         (tf/unparse (tf/formatters :mysql) (get auction key))))
 
 (defstmt insert-auction db-info
   "INSERT INTO Listing (ListID, Quantity, BuyPrice, OriginalBidPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, AContext, Active)
                 VALUES ({auc}, {quantity}, {buyout}, {bid}, {bid}, {timeLeft}, {timeLeft}, {postDate}, {owner}, {realmID}, {item}, {context}, 1)
                 ON DUPLICATE KEY UPDATE
                    BidPrice = VALUES(BidPrice),
-                   TimeLeft = VALUES(TimeLeft);")
+                   TimeLeft = VALUES(TimeLeft),
+                   Active = 1;")
 
 (defstmt deactivate-auctions! db-info
   "UPDATE Listing SET Active = 0 WHERE RealmID = {realmid};"
@@ -58,10 +65,10 @@
 
 (defn update-auctions!
   [auction-data]
-  (apply insert-auction (map #(timbre/spy (assoc (->> %
-                                                      (realm-name->id "ownerRealm")
-                                                      (time-left->id "timeLeft"))
-                                            "postDate" (tf/unparse (tf/formatters :mysql) (time/now)))) auction-data)))
+  (apply insert-auction (map #(timbre/spy (->> %
+                                               (realm-name->id "ownerRealm")
+                                               (time-left->id "timeLeft")
+                                               (post-date->fmt "postDate"))) auction-data)))
 
 (defn update-realm!
   "Checks to see if a realm needs updating and, if so, updates it."
@@ -69,6 +76,7 @@
   (if-let [file-list (get-updated-files-for realm (get update-times realm 0))]
     (let [last-update (apply max (map #(get % "lastModified") file-list)),
           auction-data (get-auction-data-from file-list)]
+      (timbre/infof "File List: %s" file-list)
       (timbre/infof "Beginning update...")
       (update-characters! auction-data)
       (update-items! auction-data)

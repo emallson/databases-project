@@ -1,7 +1,10 @@
 (ns databases-project.main
-  (:require [databases-project.auctions :refer [update-realm!]]))
+  (:require [databases-project.auctions :refer [update-realm!]]
+            [clojure.tools.nrepl.server :refer [start-server stop-server]]))
 
 (def update-times (atom {}))
+
+(defonce debug-server (start-server :port 3131))
 
 (defn -main
   [realm & rest]
