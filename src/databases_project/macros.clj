@@ -27,11 +27,7 @@
                    [& ~'groups]
                    (apply (partial jdbc/db-do-prepared ~db-info true ~'pstmt)
                           (map #(map % [~@stmt-parameters]) ~'groups))))]
-    `(defn ~stmt-name
-       ~docstring
-       [& ~'args]
-       (let [~'pstmt (jdbc/prepare-statement (or (jdbc/db-find-connection ~db-info)
-                                                 (jdbc/get-connection ~db-info))
-                                             ~stmt)]
-         ~db-fn
-         (apply ~stmt-name ~'args)))))
+    `(let [~'pstmt (jdbc/prepare-statement (or (jdbc/db-find-connection ~db-info)
+                                              (jdbc/get-connection ~db-info))
+                                           ~stmt)]
+       ~db-fn)))
