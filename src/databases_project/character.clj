@@ -7,6 +7,28 @@
             [databases-project.macros :refer [defstmt]]
             [databases-project.realm :refer [realm-name->id]]))
 
+(def Race-ids
+  {1 "Human"
+   2 "Orc"
+   3 "Dwarf"
+   4 "Night Elf"
+   5 "Undead"
+   6 "Tauren"
+   7 "Gnome"
+   8 "Troll"
+   9 "Goblin"
+   10 "Blood Elf"
+   11 "Draenei"
+   22 "Worgen"
+   25 "Alliance Pandaren"
+   26 "Horde Pandaren"
+   -1 "Scrublord"
+   })
+(defn id->Race-name
+  [key character]
+  (assoc character :race
+      (Race-ids (get character key))))
+
 (defstmt insert-character db-info
   "INSERT INTO PCharacter (CName, Race, RealmID) VALUES ({name}, {race}, {realmID});"
   :docstring "Inserts a character into the database. Need to transform RName -> RealmID prior to insertion.")
@@ -21,7 +43,7 @@
 
 (defstmt get-characters db-info
   "SELECT CName, Race, RName FROM PCharacter
-  NATURAL JOIN Realm;"
+  NATURAL JOIN Realm ORDER BY CName LIMIT {start}, 100;"
   :query? true)
 
 
