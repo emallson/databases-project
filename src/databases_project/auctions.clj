@@ -5,6 +5,7 @@
             [taoensso.timbre :as timbre]
             [clj-time.core :as time]
             [clj-time.format :as tf]
+            [clj-time.coerce :as tc]
             [databases-project.config :refer [api-key locale db-info]]
             [databases-project.macros :refer [defstmt]]
             [databases-project.realm :refer [realm-name->id get-realm]]
@@ -49,7 +50,7 @@
 (defn post-date->fmt
   [key auction]
   (assoc auction "postDate"
-         (tf/unparse (tf/formatters :mysql) (get auction key))))
+         (tf/unparse (tf/formatters :mysql) (tc/from-long (get auction key)))))
 
 (defstmt insert-auction db-info
   "INSERT INTO Listing (ListID, Quantity, BuyPrice, OriginalBidPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, AContext, Active)
