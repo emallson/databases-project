@@ -3,6 +3,8 @@
             [databases-project.macros :refer [defstmt]]
             [databases-project.config :refer [api-key locale db-info]]))
 
+(defsnippet header-base "public/header-base.html" [:head] [])
+
 (defsnippet pretty-price "public/pretty-price.html" [:span :span] [price]
   [:.gold] (prepend (-> price
                      (/ 10000) int str))
@@ -17,6 +19,7 @@
         (content (str "[" (get item :iname) "]"))))
 
 (defsnippet list-item "public/list-item.html" [:tr] [item]
+  [:head] (append (header-base))
   [:.name] (content (wowhead-link item))
   [:.stack-size] (content (str (get item :maxstack)))
   [:.min-buyout] (content (pretty-price (get item :minbuyprice)))
@@ -32,6 +35,10 @@
 
 (deftemplate character-list "public/characters.html" [headers contents]
   [:.table :tbody] (clone-for [el contents] (content(get-characters el))))
+
+(deftemplate item-details "public/item.html" [item]
+  [:head] (append (header-base))
+  [:#item-name] (content (wowhead-link item)))
 
 (defstmt get-player-listings db-info
     "SELECT * FROM Listings
@@ -53,12 +60,6 @@
     NATURAL JOIN Realm
     WHERE ItemID = {item} and RName = {itemRealm} and Active = 1;"
     :docstring "Returns all current auctions for an item."
-    :query? true)
-
-(defstmt get-item-stats db-info
-    "SELECT AVG(BuyPrice), MIN(BuyPrice), IName FROM Listings
-    NATURAL JOIN Item, Realm
-    WHERE ItemId = {item} and RName = {itemRealm} and PostDate >= {queryDate};"
     :query? true)
 
 (defstmt get-item-plots db-info

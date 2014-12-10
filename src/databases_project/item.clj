@@ -24,6 +24,19 @@
   :docstring "Get an item list with normalized prices."
   :query? true)
 
+(defstmt -get-item-stats db-info
+    "SELECT ItemID, IName, AVG(BuyPrice) AS AvgBuyPrice, MIN(BuyPrice) AS MinBuyPrice FROM Listing
+    NATURAL JOIN Item
+    NATURAL JOIN Realm
+    WHERE ItemID = {item} and RName = {realm} and PostDate >= {queryDate};"
+    :query? true)
+
+(defn get-item-stats
+  [m]
+  (let [item (first (-get-item-stats m))]
+    (when (not-any? nil? (vals item))
+      item)))
+
 (defn get-item-info
   ([item-id]
      (http/get (str "https://us.api.battle.net/wow/item/" item-id)
