@@ -16,7 +16,6 @@
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler databases-project.handler/app
          :port 3000}
-  :aot :all
   :main databases-project.main
   :source-paths ["src"]
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
