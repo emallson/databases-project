@@ -28,7 +28,13 @@
 (deftemplate item-list "public/list.html" [headers contents]
   [:.table :tbody] (clone-for [el contents] (content (list-item el))))
 
-(deftemplate character-list "public/list.html" [headers contents])
+(defsnippet get-characters "public/get-character.html" [:tr] [character]
+  [:.Character] (html-content (str (get character :cname)))
+  [:.Race] (html-content (str (get character :race)))
+  [:.Realm] (html-content (str (get character :rname))))
+
+(deftemplate character-list "public/characters.html" [headers contents]
+  [:.table :tbody] (clone-for [el contents] (content(get-characters el))))
 
 (deftemplate item-details "public/item.html" [item]
   [:head] (append (header-base))

@@ -23,7 +23,7 @@
                                      "queryDate" (prev-day (time/now))})]
       (templates/item-details item)))
   (GET "/character/:page" [page]
-       (let [characters (character/get-characters {"start"(*(-(Integer/parseInt page) 1) 100)})]
+       (let [characters (map (partial character/id->Race-name :race) (character/get-characters {"start"(*(-(Integer/parseInt page) 1) 100)}))]
          (templates/character-list [] characters)))
   (route/resources "/resources")
   (route/not-found "Not Found"))
