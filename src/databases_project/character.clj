@@ -19,6 +19,12 @@
   characters (either 0 or 1). Transforming RName -> RealmID is not necessary."
   :query? true)
 
+(defstmt get-characters db-info
+  "SELECT CName, Race, RName FROM PCharacter
+  NATURAL JOIN Realm;"
+  :query? true)
+
+
 (defn get-character-info
   "Get character info from the B.net API"
   ([{realm "ownerRealm", pname "owner"}]

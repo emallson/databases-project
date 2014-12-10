@@ -10,7 +10,13 @@
   (GET "/items/:page" [page]
     (let [items (item/list-active-with-prices {"start" (* (- (Integer/parseInt page) 1) 100)})]
       (templates/item-list [] items)))
-  (route/not-found "Not Found"))
+  (route/not-found "Not Found")
+  
+  (GET "/character/:page" [page]
+       (let [characters (character/get-characters {"start"(*(-(Integer/parseInt page) 1) 100)})]
+         (templates/character-list [] characters)))
+    (route/not-found "Not Found")
+  )
 
 (def app
   (handler/site app-routes))
