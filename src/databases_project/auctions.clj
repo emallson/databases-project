@@ -52,6 +52,8 @@
   (assoc auction "postDate"
          (tf/unparse (tf/formatters :mysql) (tc/from-long (get auction key)))))
 
+(def filter-??? (partial filter #(not= (get % "ownerRealm") "???")))
+
 (defstmt insert-auction db-info
   "INSERT INTO Listing (ListID, Quantity, BuyPrice, OriginalBidPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, AContext, Active)
                 VALUES ({auc}, {quantity}, {buyout}, {bid}, {bid}, {timeLeft}, {timeLeft}, {postDate}, {owner}, {realmID}, {item}, {context}, 1)
@@ -76,7 +78,7 @@
   [update-times realm]
   (if-let [file-list (get-updated-files-for realm (get update-times realm 0))]
     (let [last-update (apply max (map #(get % "lastModified") file-list)),
-          auction-data (get-auction-data-from file-list)]
+          auction-data (filter-??? (get-auction-data-from file-list))]
       (if-not (empty? auction-data)
         (do
           (timbre/infof "File List: %s" file-list)
