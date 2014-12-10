@@ -8,6 +8,7 @@
                  [enlive "1.1.5"]
                  [org.clojure/data.json "0.2.5"]
                  [org.clojure/java.jdbc "0.3.6"]
+                 [org.clojure/tools.nrepl "0.2.5"]
                  [mysql/mysql-connector-java "5.1.25"]
                  [http-kit "2.1.16"]
                  [com.taoensso/timbre "3.3.1" :exclusions [org.clojure/tools.reader]]
