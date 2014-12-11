@@ -31,7 +31,8 @@
    FROM Listing
    NATURAL JOIN Item
    NATURAL JOIN Realm
-   WHERE ItemID = {item} and RName = {realm} and PostDate >= {queryDate};"
+   WHERE ItemID = {item} and RName = {realm} and PostDate >= {queryDate}
+     AND BuyPrice > 0;"
   :query? true)
 
 (defn get-item-stats
