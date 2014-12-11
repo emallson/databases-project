@@ -48,6 +48,7 @@
    NATURAL JOIN Realm
    WHERE ItemID = {item} AND RName = {realm}
      AND PostDate >= {start} AND PostDate <= {end}
+     AND BuyPrice > 0
    GROUP BY HOUR(PostDate)
    ORDER BY PostDate ASC;"
   :docstring "Collects hourly Min and Mean data for an item on a realm."
