@@ -55,6 +55,30 @@
   :docstring "Collects hourly Min and Mean data for an item on a realm."
   :query? true)
 
+(defstmt get-deals db-info
+  "SELECT IName,
+          Listing.ItemID,
+          Quantity,
+          BuyPrice / Quantity AS BuyPerItem,
+          AvgBuyPrice,
+          BuyPrice / Quantity / AvgBuyPrice AS PriceRatio
+   FROM Listing
+   NATURAL JOIN Realm
+   NATURAL JOIN Item
+   INNER JOIN (SELECT ItemID, AVG(BuyPrice / Quantity) AS AvgBuyPrice
+               FROM Listing
+               NATURAL JOIN Realm
+               WHERE RName = {realm} AND BuyPrice > 0
+               GROUP BY ItemID, RealmID)
+         AS MarketValues
+         ON (MarketValues.ItemID = Listing.ItemID
+             AND BuyPrice / Quantity <= AvgBuyPrice * {ratio})
+   WHERE RName = {realm} AND Active = 1 AND BuyPrice > 0
+   ORDER BY PriceRatio ASC
+   LIMIT {start},100;"
+  :docstring "Gets auctions which are RATIO * market value or below."
+  :query? true)
+
 (defn get-item-info
   ([item-id]
      (http/get (str "https://us.api.battle.net/wow/item/" item-id)

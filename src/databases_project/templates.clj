@@ -44,6 +44,18 @@
   [:#mean-buyout] (append (pretty-price (get item :avgbuyprice)))
   [:#chart-price-time-line] (set-attr "data-prices" (json/write-str prices)))
 
+(defsnippet deal-row "public/deal-row.html" [:tr] [deal]
+  [:.name] (content (wowhead-link deal))
+  [:.quantity] (content (str (get deal :quantity)))
+  [:.price] (content (pretty-price (get deal :buyperitem)))
+  [:.market-price] (content (pretty-price (get deal :avgbuyprice)))
+  [:.ratio] (content (str (get deal :priceratio))))
+
+(deftemplate realm-deals "public/deals.html" [realm deals]
+  [:head] (append (header-base))
+  [:title] (append realm)
+  [:.table :tbody] (clone-for [deal deals] (content (deal-row deal))))
+
 (defstmt get-player-listings db-info
     "SELECT * FROM Listings
     NATURAL JOIN Realm
@@ -72,12 +84,4 @@
     NATURAL JOIN Realm
     WHERE ItemId = {item} and RName = {itemRealm} and PostDate >= {queryDate}
     GROUP BY PostDate;"
-    :query? true)
-
-(defstmt get-item-deals db-info
-    "SELECT * FROM Listings
-    NATURAL JOIN Item
-    NATURAL JOIN Realm
-    WHERE ItemId = {item} and RName = {itemRealm} and Active = 1 and BuyPrice = MIN(BuyPrice);"
-    :docstring "Finds all items currently under the minimum buyprice."
     :query? true)

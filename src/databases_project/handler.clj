@@ -43,6 +43,13 @@
         {"item" item-id, "realm" realm,
          "start" (prev-period (time/now) time/weeks), "end" (sql-time (time/now))}))))
 
+  ;; deal-finding
+  (GET "/realm/:realm/deals/:page" [realm page]
+    (when-let [deals (item/get-deals {"realm" realm,
+                                      "ratio" 0.5,
+                                      "start" (page-start (Integer/parseInt page))})]
+      (templates/realm-deals realm deals)))
+
   (GET "/character/:page" [page]
     (let [characters (map (partial character/id->Race-name :race)
                           (character/get-characters {"start"(page-start (Integer/parseInt page))}))]
