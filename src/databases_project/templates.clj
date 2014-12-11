@@ -49,7 +49,7 @@
   [:.quantity] (content (str (get deal :quantity)))
   [:.price] (content (pretty-price (get deal :buyperitem)))
   [:.market-price] (content (pretty-price (get deal :avgbuyprice)))
-  [:.ratio] (content (str (get deal :priceratio))))
+  [:.ratio] (content (str (* (get deal :priceratio) 100))))
 
 (deftemplate realm-deals "public/deals.html" [realm deals]
   [:head] (append (header-base))
