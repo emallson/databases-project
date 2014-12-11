@@ -25,17 +25,33 @@
   :query? true)
 
 (defstmt -get-item-stats db-info
-    "SELECT ItemID, IName, AVG(BuyPrice) AS AvgBuyPrice, MIN(BuyPrice) AS MinBuyPrice FROM Listing
-    NATURAL JOIN Item
-    NATURAL JOIN Realm
-    WHERE ItemID = {item} and RName = {realm} and PostDate >= {queryDate};"
-    :query? true)
+  "SELECT ItemID, IName,
+       AVG(BuyPrice / Quantity) AS AvgBuyPrice,
+       MIN(BuyPrice / Quantity) AS MinBuyPrice
+   FROM Listing
+   NATURAL JOIN Item
+   NATURAL JOIN Realm
+   WHERE ItemID = {item} and RName = {realm} and PostDate >= {queryDate};"
+  :query? true)
 
 (defn get-item-stats
   [m]
   (let [item (first (-get-item-stats m))]
     (when (not-any? nil? (vals item))
       item)))
+
+(defstmt get-buyout-over-time db-info
+  "SELECT AVG(BuyPrice / Quantity) AS AvgBuyPrice,
+          MIN(BuyPrice / Quantity) AS MinBuyPrice,
+          PostDate
+   FROM Listing
+   NATURAL JOIN Realm
+   WHERE ItemID = {item} AND RName = {realm}
+     AND PostDate >= {start} AND PostDate <= {end}
+   GROUP BY HOUR(PostDate)
+   ORDER BY PostDate ASC;"
+  :docstring "Collects hourly Min and Mean data for an item on a realm."
+  :query? true)
 
 (defn get-item-info
   ([item-id]

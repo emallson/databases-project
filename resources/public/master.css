@@ -1,8 +1,19 @@
-body {
-    background: #202020;
-    color: #DCDCCC;
-}
-
 .header {
     height: 150px;
+}
+
+.gold > .price-delimiter {
+    color: gold;
+}
+
+.silver > .price-delimiter {
+    color: silver;
+}
+
+.copper > .price-delimiter {
+    color: #c2b89e;
+}
+
+canvas {
+    width: 100%;
 }

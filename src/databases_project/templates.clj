@@ -1,11 +1,12 @@
 (ns databases-project.templates
   (:require [net.cgrand.enlive-html :refer :all]
+            [clojure.data.json :as json]
             [databases-project.macros :refer [defstmt]]
             [databases-project.config :refer [api-key locale db-info]]))
 
 (defsnippet header-base "public/header-base.html" [:head] [])
 
-(defsnippet pretty-price "public/pretty-price.html" [:span :span] [price]
+(defsnippet pretty-price "public/pretty-price.html" [:.price :> :span] [price]
   [:.gold] (prepend (-> price
                      (/ 10000) int str))
   [:.silver] (prepend (-> price
@@ -36,9 +37,12 @@
 (deftemplate character-list "public/characters.html" [headers contents]
   [:.table :tbody] (clone-for [el contents] (content(get-characters el))))
 
-(deftemplate item-details "public/item.html" [item]
+(deftemplate item-details "public/item.html" [item prices]
   [:head] (append (header-base))
-  [:#item-name] (content (wowhead-link item)))
+  [:#item-name] (content (wowhead-link item))
+  [:#min-buyout] (append (pretty-price (get item :minbuyprice)))
+  [:#mean-buyout] (append (pretty-price (get item :avgbuyprice)))
+  [:#chart-price-time-line] (set-attr "data-prices" (json/write-str prices)))
 
 (defstmt get-player-listings db-info
     "SELECT * FROM Listings
