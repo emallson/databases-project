@@ -5,6 +5,7 @@
             [databases-project.config :refer [api-key locale db-info]]))
 
 (defsnippet header-base "public/header-base.html" [:head] [])
+(defsnippet navbar "public/navbar.html" [:div] [])
 
 (defsnippet pretty-price "public/pretty-price.html" [:.price :> :span] [price]
   [:.gold] (prepend (-> price
@@ -16,7 +17,8 @@
 
 (defsnippet wowhead-link "public/wowhead-link.html" [:a] [item]
   [:a] (do->
-        (set-attr :href (format "http://www.wowhead.com/item=%d" (get item :itemid)))
+        (set-attr :href (format "../realm/Korgath/item/%d" (get item :itemid)))
+        (set-attr :rel (format "item=%d" (get item :itemid)))
         (content (str "[" (get item :iname) "]"))))
 
 (defsnippet list-item "public/list-item.html" [:tr] [item]
@@ -28,6 +30,10 @@
 (deftemplate item-list "public/list.html" [headers contents]
   [:head] (append (header-base))
   [:.table :tbody] (clone-for [el contents] (content (list-item el))))
+
+(deftemplate home "public/home.html" []
+  [:head] (append (header-base))
+  [:nav] (append (navbar)))
 
 (defsnippet get-characters "public/get-character.html" [:tr] [character]
   [:.Character] (html-content (str (get character :cname)))

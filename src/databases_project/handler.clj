@@ -55,6 +55,10 @@
                           (character/get-characters {"start"(page-start (Integer/parseInt page))}))]
          (templates/character-list [] characters)))
 
+  (GET "/home" []
+       (templates/home))
+  
+
   (route/resources "/resources")
   (route/not-found "Not Found"))
 
