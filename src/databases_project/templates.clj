@@ -5,7 +5,7 @@
             [databases-project.config :refer [api-key locale db-info]]))
 
 (defsnippet header-base "public/header-base.html" [:head] [])
-(defsnippet navbar "public/navbar.html" [:div] [])
+(defsnippet navbar "public/navbar.html" [:div.navbar] [])
 
 (defsnippet pretty-price "public/pretty-price.html" [:.price :> :span] [price]
   [:.gold] (prepend (-> price
@@ -38,11 +38,12 @@
 
 (deftemplate item-list "public/list.html" [headers contents]
   [:head] (append (header-base))
+  [:div.navbar] (append (navbar))
   [:.table :tbody] (clone-for [el contents] (content (list-item el))))
 
 (deftemplate home "public/home.html" []
   [:head] (append (header-base))
-  [:nav] (append (navbar)))
+  [:div.navbar] (append (navbar)))
 
 (defsnippet get-characters "public/get-character.html" [:tr] [character]
   [:.Character] (html-content (str (get character :cname)))
@@ -50,10 +51,13 @@
   [:.Realm] (html-content (str (get character :rname))))
 
 (deftemplate character-list "public/characters.html" [headers contents]
+  [:head] (append (header-base))
+  [:div.navbar] (append (navbar))
   [:.table :tbody] (clone-for [el contents] (content(get-characters el))))
 
 (deftemplate item-details "public/item.html" [item prices auction]
   [:head] (append (header-base))
+  [:div.navbar] (append (navbar))
   [:#item-name] (content (wowhead-link item))
   [:#min-buyout] (append (pretty-price (get item :minbuyprice)))
   [:#mean-buyout] (append (pretty-price (get item :avgbuyprice)))
