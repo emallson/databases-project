@@ -20,7 +20,7 @@
 
 (defstmt list-active-with-prices db-info
   "SELECT ItemID, IName, Context, MaxStack, MIN(BuyPrice / Quantity) AS MinBuyPrice, AVG(BuyPrice / Quantity) AS AvgBuyPrice
-   FROM Item NATURAL JOIN Listing WHERE Active = 1 GROUP BY IName, Context LIMIT {start}, 100;"
+   FROM Item NATURAL JOIN Listing WHERE Active = '1' GROUP BY IName, Context LIMIT {start}, 100;"
   :docstring "Get an item list with normalized prices."
   :query? true)
 
@@ -40,6 +40,14 @@
   (let [item (first (-get-item-stats m))]
     (when (not-any? nil? (vals item))
       item)))
+
+(defstmt get-auctions-for-item db-info
+  "select IName, Quantity, BidPrice, BuyPrice, CName, TimeLeft FROM Listing NATURAL JOIN Item 
+	WHERE ItemID = {item} and Active = '1' ORDER BY(BuyPrice);"	
+	:docstring "Get all listings of an item and sory by players"
+	:query? true)
+
+
 
 (defstmt get-buyout-over-time db-info
   "SELECT AVG(BuyPrice / Quantity) AS AvgBuyPrice,

@@ -27,6 +27,15 @@
   [:.min-buyout] (content (pretty-price (get item :minbuyprice)))
   [:.med-buyout] (content (pretty-price (get item :avgbuyprice))))
 
+(defsnippet get-auctions-for-item "public/item-auction-data.html" [:tr] [item]
+  [:.IName] (content (str (get item :iname)))
+  [:.Quant] (html-content (get item :quantity))
+  [:.BidPr] (content (pretty-price (get item :bidprice)))
+  [:.BuyPr] (content (pretty-price (get item :buyprice)))
+  [:.CName] (html-content (str (get item :cname)))
+  [:.TimeLeft] (html-content (str (get item :timeleft))))
+
+
 (deftemplate item-list "public/list.html" [headers contents]
   [:head] (append (header-base))
   [:.table :tbody] (clone-for [el contents] (content (list-item el))))
@@ -43,12 +52,13 @@
 (deftemplate character-list "public/characters.html" [headers contents]
   [:.table :tbody] (clone-for [el contents] (content(get-characters el))))
 
-(deftemplate item-details "public/item.html" [item prices]
+(deftemplate item-details "public/item.html" [item prices auction]
   [:head] (append (header-base))
   [:#item-name] (content (wowhead-link item))
   [:#min-buyout] (append (pretty-price (get item :minbuyprice)))
   [:#mean-buyout] (append (pretty-price (get item :avgbuyprice)))
-  [:#chart-price-time-line] (set-attr "data-prices" (json/write-str prices)))
+  [:#chart-price-time-line] (set-attr "data-prices" (json/write-str prices))
+  [:#IBody] (clone-for [el auction] (content(get-auctions-for-item el))))
 
 (defsnippet deal-row "public/deal-row.html" [:tr] [deal]
   [:.name] (content (wowhead-link deal))

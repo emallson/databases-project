@@ -41,7 +41,8 @@
        item
        (item/get-buyout-over-time
         {"item" item-id, "realm" realm,
-         "start" (prev-period (time/now) time/weeks), "end" (sql-time (time/now))}))))
+         "start" (prev-period (time/now) time/weeks), "end" (sql-time (time/now))})
+	(item/get-auctions-for-item {"item" item-id}))))
 
   ;; deal-finding
   (GET "/realm/:realm/deals/:page" [realm page]
