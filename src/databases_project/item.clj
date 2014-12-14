@@ -31,8 +31,10 @@
    FROM Listing
    NATURAL JOIN Item
    NATURAL JOIN Realm
-   WHERE ItemID = {item} and RName = {realm} and PostDate >= {queryDate}
-     AND BuyPrice > 0;"
+   WHERE ItemID = {item} and RName = {realm}
+     AND BuyPrice > 0
+   ORDER BY PostDate DESC
+   LIMIT {count};"
   :query? true)
 
 (defn get-item-stats
@@ -42,12 +44,10 @@
       item)))
 
 (defstmt get-auctions-for-item db-info
-  "select IName, Quantity, BidPrice, BuyPrice, CName, TimeLeft FROM Listing NATURAL JOIN Item 
-	WHERE ItemID = {item} and Active = '1' ORDER BY(BuyPrice);"	
+  "select IName, Quantity, BidPrice, BuyPrice, CName, TimeLeft FROM Listing NATURAL JOIN Item
+	WHERE ItemID = {item} and Active = '1' ORDER BY(BuyPrice);"
 	:docstring "Get all listings of an item and sory by players"
 	:query? true)
-
-
 
 (defstmt get-buyout-over-time db-info
   "SELECT AVG(BuyPrice / Quantity) AS AvgBuyPrice,

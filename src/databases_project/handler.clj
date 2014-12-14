@@ -37,7 +37,7 @@
   (GET "/realm/:realm/item/:item-id" [realm item-id]
     (when-let [item (item/get-item-stats {"item" item-id,
                                           "realm" realm,
-                                          "queryDate" (prev-period (time/now) time/days)})]
+                                          "count" 200})]
       (templates/item-details
        item
        (item/get-buyout-over-time
