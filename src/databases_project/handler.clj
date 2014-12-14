@@ -54,7 +54,7 @@
 
   (GET "/character/:page" [page]
     (let [characters (map (partial character/id->Race-name :race)
-                          (character/get-characters {"start"(page-start (Integer/parseInt page))}))]
+                          (character/get-characters {"start" (page-start (Integer/parseInt page))}))]
          (templates/character-list [] characters)))
 
   (GET "/home" []
