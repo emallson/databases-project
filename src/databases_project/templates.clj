@@ -15,14 +15,20 @@
   [:.copper] (prepend (-> price
                           (mod 100) int str)))
 
+(defsnippet item-link "public/item-link.html" [:a] [item]
+  [:a] (do->
+        (set-attr :href (format "/realm/Korgath/item/%d" (get item :itemid)))
+        (set-attr :rel (format "item=%d" (get item :itemid)))
+        (content (str "[" (get item :iname) "]"))))
+
 (defsnippet wowhead-link "public/wowhead-link.html" [:a] [item]
   [:a] (do->
-        (set-attr :href (format "../realm/Korgath/item/%d" (get item :itemid)))
+        (set-attr :href (format "https://wowhead.com/item=%d" (get item :itemid)))
         (set-attr :rel (format "item=%d" (get item :itemid)))
         (content (str "[" (get item :iname) "]"))))
 
 (defsnippet list-item "public/list-item.html" [:tr] [item]
-  [:.name] (content (wowhead-link item))
+  [:.name] (content (item-link item))
   [:.stack-size] (content (str (get item :maxstack)))
   [:.min-buyout] (content (pretty-price (get item :minbuyprice)))
   [:.med-buyout] (content (pretty-price (get item :avgbuyprice))))
@@ -65,7 +71,7 @@
   [:#IBody] (clone-for [el auction] (content(get-auctions-for-item el))))
 
 (defsnippet deal-row "public/deal-row.html" [:tr] [deal]
-  [:.name] (content (wowhead-link deal))
+  [:.name] (content (item-link deal))
   [:.quantity] (content (str (get deal :quantity)))
   [:.price] (content (pretty-price (get deal :buyperitem)))
   [:.market-price] (content (pretty-price (get deal :avgbuyprice)))

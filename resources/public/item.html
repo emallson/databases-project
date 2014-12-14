@@ -6,9 +6,8 @@
         <script src="/resources/js/dataset-helpers.js"></script>
     </head>
     <body>
-	<div class="navbar"></div>
-        <div class="container header"></div>
         <div class="container">
+            <div class="navbar"></div>
             <div class="panel panel-default">
                 <div class="panel-heading" id="item-name"></div>
                 <div class="panel-body">
@@ -48,13 +47,14 @@
                  })();
                 </script>
             </div>
+            <table class="table" id="ITable">
+	            <thead>
+		            <tr><td>Item Name</td><td>Quantity</td><td>Bid Price</td><td>Buyout Price</td><td>Seller</td><td>Time Left</td></tr>
+	            </thead>
+		        <tbody id="IBody">
+		        </tbody>
+	        </table>
+
         </div>
-	<table class="table" id="ITable">
-	<thead>
-		<tr><td>Item Name</td><td>Quantity</td><td>Bid Price</td><td>Buyout Price</td><td>Seller</td><td>Time Left</td></tr>
-	</thead>
-		<tbody id="IBody">
-		</tbody>
-	</table>
-    </body>
+	</body>
 </html>
