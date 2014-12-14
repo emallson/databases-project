@@ -20,7 +20,12 @@
 
 (defstmt list-active-with-prices db-info
   "SELECT ItemID, IName, Context, MaxStack, MIN(BuyPrice / Quantity) AS MinBuyPrice, AVG(BuyPrice / Quantity) AS AvgBuyPrice
-   FROM Item NATURAL JOIN Listing WHERE Active = '1' GROUP BY IName, Context LIMIT {start}, 100;"
+   FROM Item
+   NATURAL JOIN Listing
+   NATURAL JOIN Realm
+   WHERE RName = {realm} AND Active = '1'
+   GROUP BY IName, Context
+   LIMIT {start}, 100;"
   :docstring "Get an item list with normalized prices."
   :query? true)
 

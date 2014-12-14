@@ -30,9 +30,9 @@
   (sql-time (time/minus t (p 1))))
 
 (defroutes app-routes
-  (GET "/items/:page" [page]
-    (let [items (item/list-active-with-prices {"start" (page-start (Integer/parseInt page))})]
-      (templates/item-list [] items)))
+  (GET "/realm/:realm/items/:page" [realm page]
+    (let [items (item/list-active-with-prices {"start" (page-start (Integer/parseInt page)), "realm" realm})]
+      (templates/item-list realm [] items)))
 
   (GET "/realm/:realm" [realm]
     (templates/realm-overview
@@ -43,15 +43,16 @@
 
   ;; item details
   (GET "/realm/:realm/item/:item-id" [realm item-id]
-    (when-let [item (item/get-item-stats {"item" item-id,
-                                          "realm" realm,
-                                          "count" 200})]
+    (let [item (item/get-item-stats {"item" item-id,
+                                     "realm" realm,
+                                     "count" 200})]
       (templates/item-details
+       realm
        item
        (item/get-buyout-over-time
         {"item" item-id, "realm" realm,
          "start" (prev-period (time/now) time/weeks), "end" (sql-time (time/now))})
-	(item/get-auctions-for-item {"item" item-id}))))
+       (item/get-auctions-for-item {"item" item-id}))))
 
   ;; deal-finding
   (GET "/realm/:realm/deals/:page" [realm page]
@@ -60,17 +61,16 @@
                                       "start" (page-start (Integer/parseInt page))})]
       (templates/realm-deals realm deals)))
 
-  (GET "/character/:page" [page]
+  (GET "/realm/:realm/characters/:page" [realm page]
     (let [characters (map (partial character/id->Race-name :race)
                           (character/get-characters {"start" (page-start (Integer/parseInt page))}))]
-         (templates/character-list [] characters)))
+         (templates/character-list realm [] characters)))
 
   (GET "/home" []
     (let [realms (realm/get-realms-with-data {})]
       (templates/home realms)))
   (GET "/" []
     (redirect "/home"))
-
 
   (route/resources "/resources")
   (route/not-found "Not Found"))

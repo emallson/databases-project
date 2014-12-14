@@ -5,7 +5,20 @@
             [databases-project.config :refer [api-key locale db-info]]))
 
 (defsnippet header-base "public/header-base.html" [:head] [])
-(defsnippet navbar "public/navbar.html" [:nav] [])
+(defsnippet navbar "public/navbar.html" [:nav] [realm]
+  [:#realm-link] (do->
+                  (set-attr :href (format "/realm/%s" realm))
+                  (remove-attr :id)
+                  (content (format "%s Overview" realm)))
+  [:#items-link] (do->
+                  (set-attr :href (format "/realm/%s/items/1" realm))
+                  (remove-attr :id))
+  [:#deals-link] (do->
+                  (set-attr :href (format "/realm/%s/deals/1" realm))
+                  (remove-attr :id))
+  [:#chars-link] (do->
+                  (set-attr :href (format "/realm/%s/characters/1" realm))
+                  (remove-attr :id)))
 
 (defsnippet pretty-price "public/pretty-price.html" [:.price :> :span] [price]
   [:.gold] (prepend (-> price
@@ -41,9 +54,9 @@
   [:.CName] (html-content (str (get item :cname)))
   [:.TimeLeft] (html-content (str (get item :timeleft))))
 
-(deftemplate item-list "public/list.html" [headers contents]
+(deftemplate item-list "public/list.html" [realm headers contents]
   [:head] (append (header-base))
-  [:div.navbar] (substitute (navbar))
+  [:div.navbar] (substitute (navbar realm))
   [:.table :tbody] (clone-for [el contents] (content (list-item el))))
 
 (defsnippet realm-link "public/realm-link.html" [:li] [realm]
@@ -53,7 +66,8 @@
 
 (deftemplate home "public/home.html" [realms]
   [:head] (append (header-base))
-  [:div.navbar] (substitute (navbar))
+  ;; todo: add homepage navbar
+;;  [:div.navbar] (substitute (navbar realm))
   [:ul#realm-list] (clone-for [realm realms] (content (realm-link realm))))
 
 (defsnippet get-characters "public/get-character.html" [:tr] [character]
@@ -61,14 +75,14 @@
   [:.Race] (html-content (str (get character :race)))
   [:.Realm] (html-content (str (get character :rname))))
 
-(deftemplate character-list "public/characters.html" [headers contents]
+(deftemplate character-list "public/characters.html" [realm headers contents]
   [:head] (append (header-base))
-  [:div.navbar] (substitute (navbar))
+  [:div.navbar] (substitute (navbar realm))
   [:.table :tbody] (clone-for [el contents] (content (get-characters el))))
 
-(deftemplate item-details "public/item.html" [item prices auction]
+(deftemplate item-details "public/item.html" [realm item prices auction]
   [:head] (append (header-base))
-  [:div.navbar] (substitute (navbar))
+  [:div.navbar] (substitute (navbar realm))
   [:#item-name] (content (wowhead-link item))
   [:#min-buyout] (append (pretty-price (get item :minbuyprice)))
   [:#mean-buyout] (append (pretty-price (get item :avgbuyprice)))
@@ -91,11 +105,11 @@
 
 (deftemplate realm-overview "public/realm-overview.html" [realm counts top-listings top-value]
   [:head] (append (header-base))
-  [:div.navbar] (substitute (navbar))
+  [:div.navbar] (substitute (navbar realm))
   [:#info-panel :.panel-body] (content (realm-info-panel realm counts top-listings top-value)))
 
 (deftemplate realm-deals "public/deals.html" [realm deals]
   [:head] (append (header-base))
   [:title] (append realm)
-  [:div.navbar] (substitute (navbar))
+  [:div.navbar] (substitute (navbar realm))
   [:.table :tbody] (clone-for [deal deals] (content (deal-row deal))))
