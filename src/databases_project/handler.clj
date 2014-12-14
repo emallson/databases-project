@@ -1,5 +1,6 @@
 (ns databases-project.handler
   (:require [clojure.data.json :as json]
+            [ring.util.response :refer [redirect]]
             [compojure.core :refer :all]
             [compojure.handler :as handler]
             [compojure.route :as route]
@@ -58,7 +59,9 @@
 
   (GET "/home" []
        (templates/home))
-  
+  (GET "/" []
+    (redirect "/home"))
+
 
   (route/resources "/resources")
   (route/not-found "Not Found"))
