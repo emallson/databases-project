@@ -10,6 +10,7 @@
             [databases-project.extensions]
             [databases-project.auctions :as auctions]
             [databases-project.character :as character]
+            [databases-project.realm :as realm]
             [databases-project.item :as item]
             [databases-project.templates :as templates]))
 
@@ -32,6 +33,13 @@
   (GET "/items/:page" [page]
     (let [items (item/list-active-with-prices {"start" (page-start (Integer/parseInt page))})]
       (templates/item-list [] items)))
+
+  (GET "/realm/:realm" [realm]
+    (templates/realm-overview
+     realm
+     (first (realm/get-counts {"realm" realm}))
+     (first (realm/get-top-auctioneers-listings {"realm" realm, "count" 1}))
+     (first (realm/get-top-auctioneers-value {"realm" realm, "count" 1}))))
 
   ;; item details
   (GET "/realm/:realm/item/:item-id" [realm item-id]
@@ -58,7 +66,8 @@
          (templates/character-list [] characters)))
 
   (GET "/home" []
-       (templates/home))
+    (let [realms (realm/get-realms-with-data {})]
+      (templates/home realms)))
   (GET "/" []
     (redirect "/home"))
 

@@ -41,15 +41,20 @@
   [:.CName] (html-content (str (get item :cname)))
   [:.TimeLeft] (html-content (str (get item :timeleft))))
 
-
 (deftemplate item-list "public/list.html" [headers contents]
   [:head] (append (header-base))
   [:div.navbar] (substitute (navbar))
   [:.table :tbody] (clone-for [el contents] (content (list-item el))))
 
-(deftemplate home "public/home.html" []
+(defsnippet realm-link "public/realm-link.html" [:li] [realm]
+  [:a] (do->
+        (set-attr :href (format "/realm/%s" (:rname realm)))
+        (content (:rname realm))))
+
+(deftemplate home "public/home.html" [realms]
   [:head] (append (header-base))
-  [:div.navbar] (substitute (navbar)))
+  [:div.navbar] (substitute (navbar))
+  [:ul#realm-list] (clone-for [realm realms] (content (realm-link realm))))
 
 (defsnippet get-characters "public/get-character.html" [:tr] [character]
   [:.Character] (html-content (str (get character :cname)))
@@ -59,7 +64,7 @@
 (deftemplate character-list "public/characters.html" [headers contents]
   [:head] (append (header-base))
   [:div.navbar] (substitute (navbar))
-  [:.table :tbody] (clone-for [el contents] (content(get-characters el))))
+  [:.table :tbody] (clone-for [el contents] (content (get-characters el))))
 
 (deftemplate item-details "public/item.html" [item prices auction]
   [:head] (append (header-base))
@@ -77,38 +82,20 @@
   [:.market-price] (content (pretty-price (get deal :avgbuyprice)))
   [:.ratio] (content (str (* (get deal :priceratio) 100))))
 
+(defsnippet realm-info-panel "public/realm-info-panel.html" [:ul] [realm counts top-listings top-value]
+  [:#num-auctioneers] (prepend (str (:numcharacters counts)))
+  [:#num-listings] (prepend (str (:numlistings counts)))
+  [:#top-auctioneer-listings] (append (format "%s (%d Listings)" (:cname top-listings) (:listcount top-listings)))
+  [:#top-auctioneer-value] (html-content (format "Top Auctioneer (Value): %s (%s)" (:cname top-value)
+                                                 (apply str (emit* (flatten-nodes-coll (pretty-price (:listvalue top-value))))))))
+
+(deftemplate realm-overview "public/realm-overview.html" [realm counts top-listings top-value]
+  [:head] (append (header-base))
+  [:div.navbar] (substitute (navbar))
+  [:#info-panel :.panel-body] (content (realm-info-panel realm counts top-listings top-value)))
+
 (deftemplate realm-deals "public/deals.html" [realm deals]
   [:head] (append (header-base))
   [:title] (append realm)
   [:div.navbar] (substitute (navbar))
   [:.table :tbody] (clone-for [deal deals] (content (deal-row deal))))
-
-(defstmt get-player-listings db-info
-    "SELECT * FROM Listings
-    NATURAL JOIN Realm
-    WHERE CName = {seller} and RName = {sellerRealm} and Active = 1;"
-    :docstring "Return all listings a player has currently."
-    :query? true)
-
-(defstmt get-player-items db-info
-    "SELECT * FROM Listings
-    NATURAL JOIN Realm
-    WHERE CName = {Seller} and RName = {sellerRealm}
-    GROUP BY ItemID, Context;"
-    :docstring "Returns a list of items a player has put up for auction."
-    :query? true)
-
-(defstmt get-item-listings db-info
-    "SELECT * FROM Listings
-    NATURAL JOIN Realm
-    WHERE ItemID = {item} and RName = {itemRealm} and Active = 1;"
-    :docstring "Returns all current auctions for an item."
-    :query? true)
-
-(defstmt get-item-plots db-info
-    "SELECT AVG(BuyPrice), MIN(BuyPrice), IName FROM Listings
-    NATURAL JOIN Item
-    NATURAL JOIN Realm
-    WHERE ItemId = {item} and RName = {itemRealm} and PostDate >= {queryDate}
-    GROUP BY PostDate;"
-    :query? true)

@@ -28,6 +28,39 @@
   "SELECT RealmID, RName FROM Realm WHERE RName = {:name}"
   :query? true)
 
+(defstmt get-realms-with-data db-info
+  "SELECT RealmID, RName FROM Realm
+   NATURAL JOIN (SELECT DISTINCT RealmID FROM Listing) AS UniqueRealmIDs;"
+  :query? true
+  :docstring "Produces a list of realms which have listings in the database.")
+
+(defstmt get-counts db-info
+  "SELECT COUNT(ListID) AS NumListings, COUNT(DISTINCT CName) AS NumCharacters FROM Listing
+   NATURAL JOIN Realm
+   WHERE Active = 1 AND RName = {realm};"
+  :query? true
+  :docstring "Get the number of listings and number of characters who posted them.")
+
+(defstmt get-top-auctioneers-listings db-info
+  "SELECT CName, COUNT(ListID) AS ListCount FROM Listing
+   NATURAL JOIN Realm
+   WHERE RName = {realm} AND Active = 1
+   GROUP BY CName
+   ORDER BY ListCount DESC
+   LIMIT {count};"
+  :query? true
+  :docstring "Gets the top N auctioneers by the number of listings.")
+
+(defstmt get-top-auctioneers-value db-info
+  "SELECT CName, SUM(BuyPrice) AS ListValue FROM Listing
+   NATURAL JOIN Realm
+   WHERE RName = {realm} AND Active = 1
+   GROUP BY CName
+   ORDER BY ListValue DESC
+   LIMIT {count};"
+   :query? true
+   :docstring "Gets the top N auctioneers by the buyout value of their auctions.")
+
 (defn realm-name->id
   "Replaces the given field on the object `data` with the id of the realm name
   stored in the field."
