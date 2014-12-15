@@ -66,7 +66,12 @@
     (GET "/characters/:page" [page]
       (let [characters (map (partial character/id->Race-name :race)
                             (character/get-characters {"start" (page-start (Integer/parseInt page))}))]
-        (templates/character-list realm [] characters)))))
+        (templates/character-list realm [] characters)))
+
+    (GET "/character/:name" [name]
+      (let [overview-data (first (character/get-character-overview {"realm" realm,
+                                                                    "cname" name}))]
+        (templates/character realm name overview-data)))))
 
 (defroutes app-routes
   realm-routes

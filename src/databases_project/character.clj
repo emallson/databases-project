@@ -46,6 +46,16 @@
   NATURAL JOIN Realm ORDER BY CName LIMIT {start}, 100;"
   :query? true)
 
+(defstmt get-character-overview db-info
+  "SELECT CName, Race, RName,
+          COUNT(ListID) AS NumListings,
+          SUM(BuyPrice) AS Valuation
+   FROM Listing
+   NATURAL JOIN Realm
+   NATURAL JOIN PCharacter
+   WHERE CName = {cname} AND RName = {realm} AND Active = 1;"
+  :query? true
+  :docstring "Gets values for the character overview panel.")
 
 (defn get-character-info
   "Get character info from the B.net API"

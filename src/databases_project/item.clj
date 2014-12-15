@@ -49,7 +49,8 @@
       item)))
 
 (defstmt get-auctions-for-item db-info
-  "SELECT IName, Quantity, BidPrice, BuyPrice, CName, TimeLeft
+  "SELECT IName, Quantity, BidPrice, BuyPrice,
+          BuyPrice / Quantity AS BuyPricePerItem, CName, TimeLeft
    FROM Listing
    NATURAL JOIN Item
    WHERE ItemID = {item} and Active = 1 AND BuyPrice > 0
