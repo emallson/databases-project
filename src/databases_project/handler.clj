@@ -25,47 +25,51 @@
   (tf/unparse (tf/formatters :mysql) t))
 
 (defn prev-period
-  "Creates a MySQL-ready time that is one `p' prior to `t`."
+  "Creates a MySQL-ready time that is one `p` prior to `t`."
   [t p]
   (sql-time (time/minus t (p 1))))
 
-(defroutes app-routes
-  (GET "/realm/:realm/items/:page" [realm page]
-    (let [items (item/list-active-with-prices {"start" (page-start (Integer/parseInt page)), "realm" realm})]
-      (templates/item-list realm [] items)))
+(defroutes realm-routes
+  (context "/realm/:realm" [realm]
 
-  (GET "/realm/:realm" [realm]
-    (templates/realm-overview
-     realm
-     (first (realm/get-counts {"realm" realm}))
-     (first (realm/get-top-auctioneers-listings {"realm" realm, "count" 1}))
-     (first (realm/get-top-auctioneers-value {"realm" realm, "count" 1}))))
+    (GET "/items/:page" [page]
+      (let [items (item/list-active-with-prices {"start" (page-start (Integer/parseInt page)), "realm" realm})]
+        (templates/item-list realm [] items)))
 
-  ;; item details
-  (GET "/realm/:realm/item/:item-id" [realm item-id]
-    (let [item (item/get-item-stats {"item" item-id,
-                                     "realm" realm,
-                                     "count" 200})]
-      (templates/item-details
+    (GET "/" []
+      (templates/realm-overview
        realm
-       item
-       (item/get-buyout-over-time
-        {"item" item-id, "realm" realm,
-         "start" (prev-period (time/now) time/weeks), "end" (sql-time (time/now))})
-       (item/get-auctions-for-item {"item" item-id}))))
+       (first (realm/get-counts {"realm" realm}))
+       (first (realm/get-top-auctioneers-listings {"realm" realm, "count" 1}))
+       (first (realm/get-top-auctioneers-value {"realm" realm, "count" 1}))))
 
-  ;; deal-finding
-  (GET "/realm/:realm/deals/:page" [realm page]
-    (when-let [deals (item/get-deals {"realm" realm,
-                                      "ratio" 0.5,
-                                      "start" (page-start (Integer/parseInt page))})]
-      (templates/realm-deals realm deals)))
+    ;; item details
+    (GET "/item/:item-id" [item-id]
+      (let [item (item/get-item-stats {"item" item-id,
+                                       "realm" realm,
+                                       "count" 200})]
+        (templates/item-details
+         realm
+         item
+         (item/get-buyout-over-time
+          {"item" item-id, "realm" realm,
+           "start" (prev-period (time/now) time/weeks), "end" (sql-time (time/now))})
+         (item/get-auctions-for-item {"item" item-id}))))
 
-  (GET "/realm/:realm/characters/:page" [realm page]
-    (let [characters (map (partial character/id->Race-name :race)
-                          (character/get-characters {"start" (page-start (Integer/parseInt page))}))]
-         (templates/character-list realm [] characters)))
+    ;; deal-finding
+    (GET "/deals/:page" [page]
+      (when-let [deals (item/get-deals {"realm" realm,
+                                        "ratio" 0.5,
+                                        "start" (page-start (Integer/parseInt page))})]
+        (templates/realm-deals realm deals)))
 
+    (GET "/characters/:page" [page]
+      (let [characters (map (partial character/id->Race-name :race)
+                            (character/get-characters {"start" (page-start (Integer/parseInt page))}))]
+        (templates/character-list realm [] characters)))))
+
+(defroutes app-routes
+  realm-routes
   (GET "/home" []
     (let [realms (realm/get-realms-with-data {})]
       (templates/home realms)))
