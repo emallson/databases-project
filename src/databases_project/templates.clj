@@ -5,6 +5,7 @@
             [databases-project.config :refer [api-key locale db-info]]))
 
 (defsnippet header-base "public/header-base.html" [:head] [])
+
 (defsnippet navbar "public/navbar.html" [:nav] [realm]
   [:#realm-link] (do->
                   (set-attr :href (format "/realm/%s" realm))
@@ -70,7 +71,7 @@
 ;;  [:div.navbar] (substitute (navbar realm))
   [:ul#realm-list] (clone-for [realm realms] (content (realm-link realm))))
 
-(defsnippet get-characters "public/get-character.html" [:tr] [character]
+(defsnippet character-row "public/get-character.html" [:tr] [character]
   [:.Character] (html-content (str (get character :cname)))
   [:.Race] (html-content (str (get character :race)))
   [:.Realm] (html-content (str (get character :rname))))
@@ -78,7 +79,7 @@
 (deftemplate character-list "public/characters.html" [realm headers contents]
   [:head] (append (header-base))
   [:div.navbar] (substitute (navbar realm))
-  [:.table :tbody] (clone-for [el contents] (content (get-characters el))))
+  [:.table :tbody] (clone-for [el contents] (content (character-row el))))
 
 (deftemplate item-details "public/item.html" [realm item prices auction]
   [:head] (append (header-base))
