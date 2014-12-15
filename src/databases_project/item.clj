@@ -49,10 +49,14 @@
       item)))
 
 (defstmt get-auctions-for-item db-info
-  "select IName, Quantity, BidPrice, BuyPrice, CName, TimeLeft FROM Listing NATURAL JOIN Item
-	WHERE ItemID = {item} and Active = '1' ORDER BY(BuyPrice);"
-	:docstring "Get all listings of an item and sory by players"
-	:query? true)
+  "SELECT IName, Quantity, BidPrice, BuyPrice, CName, TimeLeft
+   FROM Listing
+   NATURAL JOIN Item
+   WHERE ItemID = {item} and Active = 1 AND BuyPrice > 0
+   ORDER BY BuyPrice / Quantity ASC
+   LIMIT 200;"
+  :docstring "Get the first 200 listings of an item and sort by buyout per item."
+  :query? true)
 
 (defstmt get-buyout-over-time db-info
   "SELECT AVG(BuyPrice / Quantity) AS AvgBuyPrice,
