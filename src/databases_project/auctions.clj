@@ -63,7 +63,7 @@
                    Active = 1;")
 
 (defstmt deactivate-auctions! db-info
-  "UPDATE Listing SET Active = 0 WHERE RealmID = {realmid};"
+  "UPDATE Listing SET Active = 0 WHERE RealmID = {:realmid};"
   :docstring "Mark all auctions for a realm inactive. Auctions will be reactivated afterwards if they are still up.")
 
 (defn update-auctions!
@@ -85,7 +85,8 @@
           (timbre/infof "Beginning update...")
           (update-characters! auction-data)
           (update-items! auction-data)
-          (deactivate-auctions! {"realmid" (get-realm {:name realm})})
+          (timbre/spy
+           (deactivate-auctions! (first (get-realm {:name realm}))))
           (update-auctions! auction-data)
           (timbre/infof "Done updating %s" realm)
           (assoc update-times realm
