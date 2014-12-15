@@ -64,13 +64,13 @@
   [:.min-buyout] (content (pretty-price (get item :minbuyprice)))
   [:.med-buyout] (content (pretty-price (get item :avgbuyprice))))
 
-(defsnippet get-auctions-for-item "public/item-auction-data.html" [:tr] [item]
+(defsnippet get-auctions-for-item "public/item-auction-data.html" [:tr] [realm item]
   [:.IName] (content (str (get item :iname)))
   [:.Quant] (html-content (get item :quantity))
   [:.BidPr] (content (pretty-price (get item :bidprice)))
   [:.BuyPr] (content (pretty-price (get item :buyprice)))
   [:.BuyPrItem] (content (pretty-price (get item :buypriceperitem)))
-  [:.CName] (html-content (str (get item :cname)))
+  [:.CName] (content (character-link realm item))
   [:.TimeLeft] (content (pretty-time-left (get item :timeleft))))
 
 (deftemplate item-list "public/list.html" [realm headers contents]
@@ -135,7 +135,7 @@
   [:#min-buyout] (append (pretty-price (get item :minbuyprice)))
   [:#mean-buyout] (append (pretty-price (get item :avgbuyprice)))
   [:#chart-price-time-line] (set-attr "data-prices" (json/write-str prices))
-  [:#IBody] (clone-for [el auction] (content (get-auctions-for-item el))))
+  [:#IBody] (clone-for [el auction] (content (get-auctions-for-item realm el))))
 
 (defsnippet deal-row "public/deal-row.html" [:tr] [realm deal]
   [:.name] (content (item-link realm deal))
