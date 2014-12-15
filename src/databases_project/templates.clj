@@ -159,4 +159,4 @@
   [:head] (append (header-base))
   [:title] (append realm)
   [:div.navbar] (substitute (navbar realm))
-  [:.table :tbody] (clone-for [deal deals] (content (deal-row deal))))
+  [:.table :tbody] (clone-for [deal deals] (content (deal-row realm deal))))
