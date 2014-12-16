@@ -10,3 +10,6 @@ pom.xml.asc
 /.nrepl-port
 *.swp
 *~
+TAGS
+config-server.clj
+auctions.json
