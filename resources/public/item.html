@@ -32,9 +32,13 @@
                                       "<%= Math.floor(value/100) % 100 %>s " +
                                       "<%= Math.floor(value % 100) %>c";
 
+                     function prettyDate(date) {
+                          return new Date(date);
+                     }
+
                      var chartData = {
                          labels: DataSet.extract("postdate", data)
-                                        .map(function(d) { return new Date(d); }),
+                                        .map(prettyDate),
                          datasets: DataSet.invert(data).slice(1)
                      };
 
