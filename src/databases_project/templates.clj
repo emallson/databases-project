@@ -114,12 +114,12 @@
                  (content (pretty-price (get overview :valuation)))))
 
 (defsnippet get-listings "public/character-listing.html" [:tr] [listing]
-  [:.IName] (content (str (get listing :IName)))
-  [:.Quant] (html-content (get listing :Quantity))
-  [:.BidPr] (content (pretty-price (get listing :BidPrice)))
-  [:.BuyPr] (content (pretty-price (get listing :BuyPrice)))
-  [:.BuyPrItem] (content (pretty-price (get listing :Buypriceperitem)))
-  [:.TimeLeft] (content (get listing :TimeLeft)))
+  [:.IName] (content (str (get listing :iname)))
+  [:.Quant] (html-content (get listing :quantity))
+  [:.BidPr] (content (pretty-price (get listing :bidprice)))
+  [:.BuyPr] (content (pretty-price (get listing :buyprice)))
+  [:.BuyPrItem] (content (pretty-price (get listing :buypriceperitem)))
+  [:.TimeLeft] (content (pretty-time-left (get listing :timeleft))))
 
 (deftemplate character "public/character.html" [realm character overview-data listing-data]
   [:head] (append (header-base))
