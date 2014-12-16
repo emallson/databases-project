@@ -46,6 +46,15 @@
   NATURAL JOIN Realm ORDER BY CName LIMIT {start}, 100;"
   :query? true)
 
+(defstmt get-character-listings db-info
+  "SELECT IName, Quantity, TimeLeft, BidPrice, BuyPricePerItem, BuyPrice
+  FROM Listing
+  NATURAL JOIN Item
+  NATURAL JOIN Realm
+  NATURAL JOIN PCharacter
+  WHERE CName = {cname} AND RName = {realm} AND Active = 1;"
+  :query? true
+  :docstring "Returns a character's current auctions")
 (defstmt get-character-overview db-info
   "SELECT CName, Race, RName,
           COUNT(ListID) AS NumListings,

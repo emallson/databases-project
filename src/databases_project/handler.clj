@@ -71,8 +71,9 @@
 
     (GET "/character/:name" [name]
       (let [overview-data (first (character/get-character-overview {"realm" realm,
-                                                                    "cname" name}))]
-        (templates/character realm name overview-data)))))
+  "cname" name})) listing-data (character/get-character-listings{    "realm" realm,
+  "cname" name}) ]
+        (templates/character realm name overview-data listing-data)))))
 
 (defroutes app-routes
   realm-routes

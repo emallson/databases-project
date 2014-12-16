@@ -113,13 +113,22 @@
                  (remove-attr :id)
                  (content (pretty-price (get overview :valuation)))))
 
-(deftemplate character "public/character.html" [realm character overview-data]
+(defsnippet get-listings "public/character-listing.html" [:tr] [listing]
+  [:.IName] (content (str (get listing :IName)))
+  [:.Quant] (html-content (get listing :Quantity))
+  [:.BidPr] (content (pretty-price (get listing :BidPrice)))
+  [:.BuyPr] (content (pretty-price (get listing :BuyPrice)))
+  [:.BuyPrItem] (content (pretty-price (get listing :Buypriceperitem)))
+  [:.TimeLeft] (content (get listing :TimeLeft)))
+
+(deftemplate character "public/character.html" [realm character overview-data listing-data]
   [:head] (append (header-base))
   [:title] (content (format "%s-%s" character realm))
   [:.navbar] (substitute (navbar realm))
   [:#overview-panel] (do->
                       (add-class "col-md-4")
-                      (content (character-overview-panel overview-data))))
+                      (content (character-overview-panel overview-data)))
+  [:.table :tbody] (clone-for [el listing-data](content (get-listings el))))
 
 (defsnippet character-row "public/get-character.html" [:tr] [realm character]
   [:.Character] (content (character-link realm character))
