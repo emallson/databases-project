@@ -19,11 +19,11 @@
   :query? true)
 
 (defstmt list-active-with-prices db-info
-  "SELECT ItemID, IName, Context, MaxStack, MIN(BuyPrice / Quantity) AS MinBuyPrice, AVG(BuyPrice / Quantity) AS AvgBuyPrice
-   FROM Item
-   NATURAL JOIN Listing
-   NATURAL JOIN Realm
-   WHERE RName = {realm} AND Active = '1'
+  "SELECT ItemID, IName, Context, MaxStack, MIN(BuyPricePerItem) AS MinBuyPrice, AVG(BuyPricePerItem) AS AvgBuyPrice
+   FROM Listing
+   NATURAL JOIN Item
+   WHERE RealmID = (SELECT RealmID FROM Realm WHERE RName = {realm})
+     AND Active = 1
    GROUP BY IName, Context
    LIMIT {start}, 100;"
   :docstring "Get an item list with normalized prices."
@@ -31,8 +31,8 @@
 
 (defstmt -get-item-stats db-info
   "SELECT ItemID, IName,
-       AVG(BuyPrice / Quantity) AS AvgBuyPrice,
-       MIN(BuyPrice / Quantity) AS MinBuyPrice
+       AVG(BuyPricePerItem) AS AvgBuyPrice,
+       MIN(BuyPricePerItem) AS MinBuyPrice
    FROM Listing
    NATURAL JOIN Item
    NATURAL JOIN Realm
@@ -50,18 +50,18 @@
 
 (defstmt get-auctions-for-item db-info
   "SELECT IName, Quantity, BidPrice, BuyPrice,
-          BuyPrice / Quantity AS BuyPricePerItem, CName, TimeLeft
+          BuyPricePerItem, CName, TimeLeft
    FROM Listing
    NATURAL JOIN Item
    WHERE ItemID = {item} and Active = 1 AND BuyPrice > 0
-   ORDER BY BuyPrice / Quantity ASC
+   ORDER BY BuyPricePerItem ASC
    LIMIT 200;"
   :docstring "Get the first 200 listings of an item and sort by buyout per item."
   :query? true)
 
 (defstmt get-buyout-over-time db-info
-  "SELECT AVG(BuyPrice / Quantity) AS AvgBuyPrice,
-          MIN(BuyPrice / Quantity) AS MinBuyPrice,
+  "SELECT AVG(BuyPricePerItem) AS AvgBuyPrice,
+          MIN(BuyPricePerItem) MinBuyPrice,
           PostDate
    FROM Listing
    NATURAL JOIN Realm
@@ -77,21 +77,20 @@
   "SELECT IName,
           Listing.ItemID,
           Quantity,
-          BuyPrice / Quantity AS BuyPerItem,
+          BuyPricePerItem,
           AvgBuyPrice,
-          BuyPrice / Quantity / AvgBuyPrice AS PriceRatio
+          BuyPricePerItem / AvgBuyPrice AS PriceRatio
    FROM Listing
-   NATURAL JOIN Realm
    NATURAL JOIN Item
-   INNER JOIN (SELECT ItemID, AVG(BuyPrice / Quantity) AS AvgBuyPrice
+   INNER JOIN (SELECT ItemID, AVG(BuyPricePerItem) AS AvgBuyPrice
                FROM Listing
                NATURAL JOIN Realm
                WHERE RName = {realm} AND BuyPrice > 0
                GROUP BY ItemID, RealmID)
          AS MarketValues
          ON (MarketValues.ItemID = Listing.ItemID
-             AND BuyPrice / Quantity <= AvgBuyPrice * {ratio})
-   WHERE RName = {realm} AND Active = 1 AND BuyPrice > 0
+             AND BuyPricePerItem <= AvgBuyPrice * {ratio})
+   WHERE RealmID = (SELECT RealmID FROM Realm WHERE RName = {realm}) AND Active = 1 AND BuyPrice > 0
    ORDER BY PriceRatio ASC
    LIMIT {start},100;"
   :docstring "Gets auctions which are RATIO * market value or below."

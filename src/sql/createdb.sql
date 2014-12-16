@@ -1,5 +1,6 @@
 CREATE TABLE Realm (RealmID INT PRIMARY KEY NOT NULL,
-                    RName VARCHAR(30) NOT NULL)
+                    RName VARCHAR(30) NOT NULL
+                    UNIQUE (RName))
                     CHARACTER SET utf8 COLLATION utf8_bin;
 
 CREATE TABLE PCharacter (CName VARCHAR(12) NOT NULL, -- Max name length is 12
@@ -20,6 +21,7 @@ CREATE TABLE Item (ItemID INT NOT NULL,
 CREATE TABLE Listing (ListID BIGINT PRIMARY KEY NOT NULL,
                       Quantity INT NOT NULL,
                       BuyPrice BIGINT, -- allow NULL to indicate no buyout
+                      BuyPricePerItem DOUBLE NOT NULL DEFAULT 0,
                       OriginalBidPrice BIGINT NOT NULL,
                       BidPrice BIGINT NOT NULL,
                       StartLength INT NOT NULL,
@@ -31,8 +33,22 @@ CREATE TABLE Listing (ListID BIGINT PRIMARY KEY NOT NULL,
                        -- not used at this point, eventually will reference
                        -- Item.Context. Relationship is unclear at this point.
                       AContext INT NOT NULL,
-                      ACTIVE SMALLINT NOT NULL,
+                      Active SMALLINT NOT NULL,
                       FOREIGN KEY(CName) REFERENCES PCharacter(CName),
                       FOREIGN KEY(RealmID) REFERENCES Realm(RealmID),
                       FOREIGN KEY(ItemID) REFERENCES Item(ItemID))
                       CHARACTER SET utf8 COLLATION utf8_bin;
+
+CREATE INDEX listing_realm_active ON Listing(RealmID, Active);
+CREATE INDEX listing_bppi ON Listing(ItemID, BuyPricePerItem);
+
+delimiter |
+
+CREATE TRIGGER bppi_insert
+BEFORE INSERT ON Listing
+FOR EACH ROW
+BEGIN
+    SET NEW.BuyPricePerItem = NEW.BuyPrice / NEW.Quantity;
+END;|
+
+delimiter ;

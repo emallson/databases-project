@@ -1,6 +1,7 @@
 (ns databases-project.handler
   (:require [clojure.data.json :as json]
             [ring.util.response :refer [redirect]]
+            [taoensso.timbre.profiling :refer [profile]]
             [compojure.core :refer :all]
             [compojure.handler :as handler]
             [compojure.route :as route]
@@ -32,16 +33,16 @@
 (defroutes realm-routes
   (context "/realm/:realm" [realm]
 
-    (GET "/items/:page" [page]
-      (let [items (item/list-active-with-prices {"start" (page-start (Integer/parseInt page)), "realm" realm})]
-        (templates/item-list realm [] items)))
-
     (GET "/" []
       (templates/realm-overview
        realm
        (first (realm/get-counts {"realm" realm}))
        (first (realm/get-top-auctioneers-listings {"realm" realm, "count" 1}))
        (first (realm/get-top-auctioneers-value {"realm" realm, "count" 1}))))
+
+    (GET "/items/:page" [page]
+      (let [items (item/list-active-with-prices {"start" (page-start (Integer/parseInt page)), "realm" realm})]
+        (templates/item-list realm [] items)))
 
     ;; item details
     (GET "/item/:item-id" [item-id]
