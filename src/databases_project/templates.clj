@@ -26,11 +26,11 @@
                   (remove-attr :id)))
 
 (defsnippet pretty-price "public/pretty-price.html" [:.price :> :span] [price]
-  [:.gold] (prepend (-> price
+  [:.gold] (prepend (-> (or price 0)
                      (/ 10000) int str))
-  [:.silver] (prepend (-> price
+  [:.silver] (prepend (-> (or price 0)
                           (/ 100) (mod 100) int str))
-  [:.copper] (prepend (-> price
+  [:.copper] (prepend (-> (or price 0)
                           (mod 100) int str)))
 
 (defn pretty-time-left
