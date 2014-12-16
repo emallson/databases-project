@@ -53,7 +53,9 @@
           BuyPricePerItem, CName, TimeLeft
    FROM Listing
    NATURAL JOIN Item
-   WHERE ItemID = {item} and Active = 1 AND BuyPrice > 0
+   WHERE ItemID = {item}
+     AND RealmID = (SELECT RealmID FROM Realm WHERE RName = {realm})
+     AND Active = 1 AND BuyPrice > 0
    ORDER BY BuyPricePerItem ASC
    LIMIT 200;"
   :docstring "Get the first 200 listings of an item and sort by buyout per item."
