@@ -159,3 +159,9 @@
     (doseq [item item-group]
       (timbre/debugf "Inserting: %s" item)
       (insert-item item))))
+(defstmt max-pages db-info
+  "SELECT COUNT(*)/100 FROM LISTING;"
+  :docstring "Gets total number of listings divided by 100"
+  :query? "true")
+  
+

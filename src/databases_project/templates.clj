@@ -47,8 +47,8 @@
         (set-attr :rel (format "item=%d" (get item :itemid)))
         (content (str "[" (get item :iname) "]"))))
 
-(defsnippet add-button "public/button.html" [:div.button][]
-	)
+(defsnippet add-button "public/button.html" [:div.btn-group][]
+  [:div.btn-group :#middle] (content (format "test")))
 
 (defsnippet character-link "public/item-link.html" [:a] [realm character]
   [:a] (do->
@@ -76,10 +76,21 @@
   [:.CName] (content (character-link realm item))
   [:.TimeLeft] (content (pretty-time-left (get item :timeleft))))
 
-(deftemplate item-list "public/list.html" [realm headers contents]
+(defn change-page [neg page max]
+  (format "location.href = '%s';" (str 
+	(if (== neg 1)
+    		(+ (read-string page) 1)
+		(if (> (read-string page) 1)
+			(- (read-string page) 1))))))
+
+(deftemplate item-list "public/list.html" [realm headers contents page max-pages]
   [:head] (append (header-base))
   [:div.navbar] (substitute (navbar realm))
-  [:.table :tbody] (clone-for [el contents] (content (list-item realm el))))
+  [:.table :tbody] (clone-for [el contents] (content (list-item realm el)))
+  [:div.btn-group] (append (add-button))
+  [:div.btn-group :#middle] (content (format page))
+  [:div.btn-group :#next] (set-attr :onclick (change-page 1 page max-pages))
+  [:div.btn-group :#prev] (set-attr :onclick (change-page 0 page max-pages)))
 
 (defsnippet realm-link "public/realm-link.html" [:li] [realm]
   [:a] (do->
@@ -128,17 +139,22 @@
   [:#overview-panel] (do->
                       (add-class "col-md-4")
                       (content (character-overview-panel overview-data)))
-  [:.table :tbody] (clone-for [el listing-data](content (get-listings el))))
+  [:.table :tbody] (clone-for [el listing-data](content (get-listings el)))
+  [:div.btn-group] (append(add-button)))
 
 (defsnippet character-row "public/get-character.html" [:tr] [realm character]
   [:.Character] (content (character-link realm character))
   [:.Race] (html-content (str (get character :race)))
   [:.Realm] (html-content (str (get character :rname))))
 
-(deftemplate character-list "public/characters.html" [realm headers contents]
+(deftemplate character-list "public/characters.html" [realm headers contents page]
   [:head] (append (header-base))
   [:div.navbar] (substitute (navbar realm))
-  [:.table :tbody] (clone-for [el contents] (content (character-row realm el))))
+  [:.table :tbody] (clone-for [el contents] (content (character-row realm el)))
+  [:div.btn-group] (append (add-button))
+  [:div.btn-group :#middle] (content (format page))
+  [:div.btn-group :#next] (set-attr :onclick (change-page 1 page 0))
+  [:div.btn-group :#prev] (set-attr :onclick (change-page 0 page 0)))
 
 (deftemplate item-details "public/item.html" [realm item prices auction]
   [:head] (append (header-base))
@@ -148,7 +164,7 @@
   [:#mean-buyout] (append (pretty-price (get item :avgbuyprice)))
   [:#chart-price-time-line] (set-attr "data-prices" (json/write-str prices))
   [:#IBody] (clone-for [el auction] (content (get-auctions-for-item realm el)))
-  [:div.button] (append (add-button)))
+  [:div.btn-group] (append (add-button)))
 
 (defsnippet deal-row "public/deal-row.html" [:tr] [realm deal]
   [:.name] (content (item-link realm deal))
