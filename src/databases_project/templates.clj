@@ -47,6 +47,9 @@
         (set-attr :rel (format "item=%d" (get item :itemid)))
         (content (str "[" (get item :iname) "]"))))
 
+(defsnippet add-button "public/button.html" [:div.button][]
+	)
+
 (defsnippet character-link "public/item-link.html" [:a] [realm character]
   [:a] (do->
         (set-attr :href (format "/realm/%s/character/%s" realm (get character :cname)))
@@ -76,7 +79,8 @@
 (deftemplate item-list "public/list.html" [realm headers contents]
   [:head] (append (header-base))
   [:div.navbar] (substitute (navbar realm))
-  [:.table :tbody] (clone-for [el contents] (content (list-item realm el))))
+  [:.table :tbody] (clone-for [el contents] (content (list-item realm el)))
+  [:div.button] (append (add-button)))
 
 (defsnippet realm-link "public/realm-link.html" [:li] [realm]
   [:a] (do->
