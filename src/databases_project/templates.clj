@@ -163,8 +163,7 @@
   [:#min-buyout] (append (pretty-price (get item :minbuyprice)))
   [:#mean-buyout] (append (pretty-price (get item :avgbuyprice)))
   [:#chart-price-time-line] (set-attr "data-prices" (json/write-str prices))
-  [:#IBody] (clone-for [el auction] (content (get-auctions-for-item realm el)))
-  [:div.btn-group] (append (add-button)))
+  [:#IBody] (clone-for [el auction] (content (get-auctions-for-item realm el))))
 
 (defsnippet deal-row "public/deal-row.html" [:tr] [realm deal]
   [:.name] (content (item-link realm deal))

@@ -1,12 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
+	<head>	
+        	<link rel="stylesheet" href="/resources/item.css">
+        	<script src="/resources/js/Chart.js"></script>
+        	<script src="/resources/js/dataset-helpers.js"></script>
 	</head>
 	<body>
-        <div class="container">
-		    <div class="navbar"></div>
+	<center><img src="http://i.imgur.com/c37ghpE.png" id="logo"></center>
+        <!--<div class="container">
             <ul class="list-unstyled" id="realm-list">
             </ul>
-        </div>
+        </div>-->
+	
+	<center>
+	<h2 id="r-avail">Realms Available</h2>	
+	<div class="realm-group" role="group" aria-label="..." id="b-group">
+	  	<button type="button" class="btn btn-default"
+			id = "r1" onclick="location.href = '/realm/Illidan'">Illidan</button>
+  		<button type="button" class="btn btn-default"
+			id="r2" onclick="location.href='/realm/Korgath'">Korgath</button>
+  		<button type="button" class="btn btn-default"
+			id = "r3" onclick="location.href='/realm/Tichondrius'">Tichondrius</button>
+		</div>
+	</center>
 	</body>
 </html>

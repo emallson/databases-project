@@ -18,8 +18,21 @@ canvas {
     width: 100%;
 }
 
+
 div.btn-group{
 	margin-left: 7.5vw;
+}
+
+#r1, #r2, #r3 {
+	width:25vw;
+	font-family:"Impact";
+	font-size:24px;
+}
+
+#logo {
+	padding:50px;
+	width=150%;
+	height=150%
 }
 
 #middle {
