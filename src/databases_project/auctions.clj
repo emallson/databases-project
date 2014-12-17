@@ -52,11 +52,21 @@
   (assoc auction "postDate"
          (tf/unparse (tf/formatters :mysql) (tc/from-long (get auction key)))))
 
-(def filter-??? (partial filter #(not= (get % "ownerRealm") "???")))
+(def filter-???
+  "Filters all auctions with ??? as their realm. These are auctions posted by
+  deleted characters."
+  (partial filter #(not= (get % "ownerRealm") "???")))
+
+(defn buyprice->buyprice-per-item
+  "Adds the buyoutPerItem field to an auction."
+  [key auction]
+  (assoc auction "buyoutPerItem"
+         (/ (get auction "buyout")
+            (get auction "quantity"))))
 
 (defstmt insert-auction db-info
-  "INSERT INTO Listing (ListID, Quantity, BuyPrice, OriginalBidPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, AContext, Active)
-                VALUES ({auc}, {quantity}, {buyout}, {bid}, {bid}, {timeLeft}, {timeLeft}, {postDate}, {owner}, {realmID}, {item}, {context}, 1)
+  "INSERT INTO Listing (ListID, Quantity, BuyPricePerItem, OriginalBidPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, AContext, Active)
+                VALUES ({auc}, {quantity}, {buyoutPerItem}, {bid}, {bid}, {timeLeft}, {timeLeft}, {postDate}, {owner}, {realmID}, {item}, {context}, 1)
                 ON DUPLICATE KEY UPDATE
                    BidPrice = VALUES(BidPrice),
                    TimeLeft = VALUES(TimeLeft),

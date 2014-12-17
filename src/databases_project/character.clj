@@ -51,7 +51,8 @@
   :query? true)
 
 (defstmt get-character-listings db-info
-  "SELECT IName, Quantity, TimeLeft, BidPrice, BuyPricePerItem, BuyPrice
+  "SELECT IName, Quantity, TimeLeft, BidPrice, BuyPricePerItem,
+          BuyPricePerItem * Quantity AS BuyPrice
   FROM Listing
   NATURAL JOIN Item
   NATURAL JOIN Realm
@@ -62,7 +63,7 @@
 (defstmt get-character-overview db-info
   "SELECT CName, Race, RName,
           COUNT(ListID) AS NumListings,
-          SUM(BuyPrice) AS Valuation
+          SUM(BuyPricePerItem * Quantity) AS Valuation
    FROM Listing
    NATURAL JOIN Realm
    NATURAL JOIN PCharacter

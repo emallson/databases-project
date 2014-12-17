@@ -37,7 +37,7 @@
    NATURAL JOIN Item
    NATURAL JOIN Realm
    WHERE ItemID = {item} and RName = {realm}
-     AND BuyPrice > 0
+     AND BuyPricePerItem > 0
    ORDER BY PostDate DESC
    LIMIT {count};"
   :query? true)
@@ -49,13 +49,13 @@
       item)))
 
 (defstmt get-auctions-for-item db-info
-  "SELECT IName, Quantity, BidPrice, BuyPrice,
+  "SELECT IName, Quantity, BidPrice, BuyPricePerItem * Quantity AS BuyPrice,
           BuyPricePerItem, CName, TimeLeft
    FROM Listing
    NATURAL JOIN Item
    WHERE ItemID = {item}
      AND RealmID = (SELECT RealmID FROM Realm WHERE RName = {realm})
-     AND Active = 1 AND BuyPrice > 0
+     AND Active = 1 AND BuyPricePerItem > 0
    ORDER BY BuyPricePerItem ASC
    LIMIT 200;"
   :docstring "Get the first 200 listings of an item and sort by buyout per item."
@@ -69,7 +69,7 @@
    NATURAL JOIN Realm
    WHERE ItemID = {item} AND RName = {realm}
      AND PostDate >= {start} AND PostDate <= {end}
-     AND BuyPrice > 0
+     AND BuyPricePerItem > 0
    GROUP BY HOUR(PostDate)
    ORDER BY PostDate ASC;"
   :docstring "Collects hourly Min and Mean data for an item on a realm."
@@ -87,12 +87,12 @@
    INNER JOIN (SELECT ItemID, AVG(BuyPricePerItem) AS AvgBuyPrice
                FROM Listing
                NATURAL JOIN Realm
-               WHERE RName = {realm} AND BuyPrice > 0
+               WHERE RName = {realm} AND BuyPricePerItem > 0
                GROUP BY ItemID, RealmID)
          AS MarketValues
          ON (MarketValues.ItemID = Listing.ItemID
              AND BuyPricePerItem <= AvgBuyPrice * {ratio})
-   WHERE RealmID = (SELECT RealmID FROM Realm WHERE RName = {realm}) AND Active = 1 AND BuyPrice > 0
+   WHERE RealmID = (SELECT RealmID FROM Realm WHERE RName = {realm}) AND Active = 1 AND BuyPricePerItem > 0
    ORDER BY PriceRatio ASC
    LIMIT {start},100;"
   :docstring "Gets auctions which are RATIO * market value or below."
@@ -163,5 +163,3 @@
   "SELECT COUNT(*)/100 FROM LISTING;"
   :docstring "Gets total number of listings divided by 100"
   :query? "true")
-  
-

@@ -52,7 +52,7 @@
   :docstring "Gets the top N auctioneers by the number of listings.")
 
 (defstmt get-top-auctioneers-value db-info
-  "SELECT CName, SUM(BuyPrice) AS ListValue FROM Listing
+  "SELECT CName, SUM(BuyPricePerItem * Quantity) AS ListValue FROM Listing
    NATURAL JOIN Realm
    WHERE RName = {realm} AND Active = 1
    GROUP BY CName
