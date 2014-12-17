@@ -66,7 +66,8 @@
 
     (GET "/characters/:page" [page]
       (let [characters (map (partial character/id->Race-name :race)
-                            (character/get-characters {"start" (page-start (Integer/parseInt page))}))]
+                            (character/get-characters {"realm" realm,
+                                                       "start" (page-start (Integer/parseInt page))}))]
         (templates/character-list realm [] characters page)))
 
     (GET "/character/:name" [name]

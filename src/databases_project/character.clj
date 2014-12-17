@@ -43,7 +43,11 @@
 
 (defstmt get-characters db-info
   "SELECT CName, Race, RName FROM PCharacter
-  NATURAL JOIN Realm ORDER BY CName LIMIT {start}, 100;"
+  NATURAL JOIN Realm
+  WHERE RName = {realm}
+    AND CName IN (SELECT CName FROM Listing WHERE Active = 1 AND Listing.RealmID = Realm.RealmID)
+  ORDER BY CName
+  LIMIT {start}, 100;"
   :query? true)
 
 (defstmt get-character-listings db-info
