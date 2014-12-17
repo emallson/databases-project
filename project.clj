@@ -21,4 +21,6 @@
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                                   [ring-mock "0.1.5"]]}
              :ring {:uberjar-name "wow-ring.jar"}
-             :updater {:uberjar-name "wow-updater.jar"}})
+             :updater {:uberjar-name "wow-updater.jar"
+                       :aot [databases-project.main
+                             databases-project.auctions]}})
