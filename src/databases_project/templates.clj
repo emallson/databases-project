@@ -79,8 +79,7 @@
 (deftemplate item-list "public/list.html" [realm headers contents]
   [:head] (append (header-base))
   [:div.navbar] (substitute (navbar realm))
-  [:.table :tbody] (clone-for [el contents] (content (list-item realm el)))
-  [:div.button] (append (add-button)))
+  [:.table :tbody] (clone-for [el contents] (content (list-item realm el))))
 
 (defsnippet realm-link "public/realm-link.html" [:li] [realm]
   [:a] (do->
@@ -139,7 +138,8 @@
   [:#min-buyout] (append (pretty-price (get item :minbuyprice)))
   [:#mean-buyout] (append (pretty-price (get item :avgbuyprice)))
   [:#chart-price-time-line] (set-attr "data-prices" (json/write-str prices))
-  [:#IBody] (clone-for [el auction] (content (get-auctions-for-item realm el))))
+  [:#IBody] (clone-for [el auction] (content (get-auctions-for-item realm el)))
+  [:div.button] (append (add-button)))
 
 (defsnippet deal-row "public/deal-row.html" [:tr] [realm deal]
   [:.name] (content (item-link realm deal))
