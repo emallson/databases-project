@@ -1,6 +1,5 @@
 CREATE TABLE Realm (RealmID INT PRIMARY KEY NOT NULL,
-                    RName VARCHAR(30) NOT NULL
-                    UNIQUE (RName))
+                    RName VARCHAR(30) NOT NULL UNIQUE)
                     CHARACTER SET utf8 COLLATION utf8_bin;
 
 CREATE TABLE PCharacter (CName VARCHAR(12) NOT NULL, -- Max name length is 12
