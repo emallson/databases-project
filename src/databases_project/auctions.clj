@@ -10,7 +10,7 @@
             [databases-project.macros :refer [defstmt]]
             [databases-project.realm :refer [realm-name->id get-realm]]
             [databases-project.character :refer [update-characters!]]
-            [databases-project.item :refer [update-items!]]))
+            [databases-project.item :refer [get-cached-item update-items!]]))
 
 (defn get-auction-files-for
   "Get list of files containing auction data for a realm."
@@ -64,9 +64,36 @@
          (/ (get auction "buyout")
             (get auction "quantity"))))
 
+(def context-numbers?
+  {3 "raid-normal",
+   5 "raid-heroic",
+   6 "raid-mythic",
+   13 "trade-skill"})
+
+(defn acontext->context
+  "Translates the context field on an auction into a value matching the foreign
+  key to Item. This is done with a best guess and may not be 100% accurate."
+  [auction]
+  (let [item (get-cached-item auction),
+        contexts (into #{} (map #(get % "context") item)),
+        acontext (get auction "context"),
+        auction (assoc auction "acontext" acontext)]
+    (cond
+     (= (count contexts) 1)
+     (assoc auction
+       "context" (first contexts))
+
+     (and (contains? context-numbers? acontext)
+          (contains? contexts (context-numbers? acontext)))
+     (assoc auction
+       "context" (context-numbers? acontext))
+
+     :else (assoc auction
+             "context" (first contexts)))))
+
 (defstmt insert-auction db-info
-  "INSERT INTO Listing (ListID, Quantity, BuyPricePerItem, OriginalBidPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, AContext, Active)
-                VALUES ({auc}, {quantity}, {buyoutPerItem}, {bid}, {bid}, {timeLeft}, {timeLeft}, {postDate}, {owner}, {realmID}, {item}, {context}, 1)
+  "INSERT INTO Listing (ListID, Quantity, BuyPricePerItem, OriginalBidPrice, BidPrice, StartLength, TimeLeft, PostDate, CName, RealmID, ItemID, Context, AContext, Active)
+                VALUES ({auc}, {quantity}, {buyoutPerItem}, {bid}, {bid}, {timeLeft}, {timeLeft}, {postDate}, {owner}, {realmID}, {item}, {context}, {acontext}, 1)
                 ON DUPLICATE KEY UPDATE
                    BidPrice = VALUES(BidPrice),
                    TimeLeft = VALUES(TimeLeft),
@@ -81,7 +108,8 @@
   (apply insert-auction (map #(timbre/spy (->> %
                                                (realm-name->id "ownerRealm")
                                                (time-left->id "timeLeft")
-                                               (post-date->fmt "postDate"))) auction-data)))
+                                               (post-date->fmt "postDate")
+                                               (acontext->context))) auction-data)))
 
 (defn update-realm!
   "Checks to see if a realm needs updating and, if so, updates it."
