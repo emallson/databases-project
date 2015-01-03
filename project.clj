@@ -9,15 +9,17 @@
                  [org.clojure/data.json "0.2.5"]
                  [org.clojure/java.jdbc "0.3.6"]
                  [org.clojure/tools.nrepl "0.2.5"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [mysql/mysql-connector-java "5.1.25"]
-                 [http-kit "2.1.16"]
+                 [clj-http "1.0.1"]
                  [com.taoensso/timbre "3.3.1" :exclusions [org.clojure/tools.reader]]
                  [clj-time "0.6.0"]
+                 [throttler "1.0.0"]
                  [korma "0.4.1-LOCAL"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler databases-project.handler/app
          :port 3000}
-  :main databases-project.main
+  :main databases-project.scraper
   :source-paths ["src"]
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                                   [ring-mock "0.1.5"]]}

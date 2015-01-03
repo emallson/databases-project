@@ -1,10 +1,10 @@
 (ns databases-project.character
-  (:require [org.httpkit.client :as http]
-            [clojure.data.json :as json]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.core.async :as async :refer [go go-loop <! >!]]
             [taoensso.timbre :as timbre]
-            [databases-project.config :refer [api-key locale db-info]]
-            [databases-project.macros :refer [defstmt]]
+            [databases-project.entities :as ents]
+            [databases-project.api :as api]
+            [korma.core :as korma :refer :all]
+            [clj-http.client :as http]
             [databases-project.realm :refer [realm-name->id]]))
 
 (def race-ids
@@ -22,91 +22,121 @@
    22 "Worgen"
    25 "Alliance Pandaren"
    26 "Horde Pandaren"
-   -1 "Scrublord"
-   })
-(defn id->race-name
-  [key character]
-  (assoc character :race
-      (Race-ids (get character key))))
+   -1 "Scrublord"})
 
-(defstmt insert-character db-info
-  "INSERT INTO PCharacter (CName, Race, RealmID) VALUES ({name}, {race}, {realmID});"
-  :docstring "Inserts a character into the database. Need to transform RName -> RealmID prior to insertion.")
+(defn reformat-character
+  "Reformats a character from the value given by the API to a value that can be
+  given to Korma."
+  [character]
+  {:CName (character :name)
+   :Race (character :race)
+   :RealmID (realm-name->id (character :realm))})
 
-(defstmt get-cached-character db-info
-  "SELECT CName, Race, RealmID FROM PCharacter
-   NATURAL JOIN Realm
-   WHERE CName = {owner} AND RName = {ownerRealm};"
-  :docstring "Pass in an auction object and this will return matching
-  characters (either 0 or 1). Transforming RName -> RealmID is not necessary."
-  :query? true)
+(def character-url
+  "Produces a url for the character"
+  (partial format "https://us.api.battle.net/wow/character/%s/%s"))
 
-(defstmt get-characters db-info
-  "SELECT CName, Race, RName FROM PCharacter
-  NATURAL JOIN Realm
-  WHERE RName = {realm}
-    AND CName IN (SELECT CName FROM Listing WHERE Active = 1 AND Listing.RealmID = Realm.RealmID)
-  ORDER BY CName
-  LIMIT {start}, 100;"
-  :query? true)
+(defn get-character
+  [realm-name char-name]
+  (let [{status :status, body :body} (api/get (character-url realm-name char-name))]
+    (condp = status
+        200 (reformat-character body)
+        404 (reformat-character {:name char-name, :realm realm-name, :race -1}))))
 
-(defstmt get-character-listings db-info
-  "SELECT IName, Quantity, TimeLeft, BidPrice, BuyPricePerItem,
-          BuyPricePerItem * Quantity AS BuyPrice
-  FROM Listing
-  NATURAL JOIN Item
-  NATURAL JOIN Realm
-  NATURAL JOIN PCharacter
-  WHERE CName = {cname} AND RName = {realm} AND Active = 1;"
-  :query? true
-  :docstring "Returns a character's current auctions")
-(defstmt get-character-overview db-info
-  "SELECT CName, Race, RName,
-          COUNT(ListID) AS NumListings,
-          SUM(BuyPricePerItem * Quantity) AS Valuation
-   FROM Listing
-   NATURAL JOIN Realm
-   NATURAL JOIN PCharacter
-   WHERE CName = {cname} AND RName = {realm} AND Active = 1;"
-  :query? true
-  :docstring "Gets values for the character overview panel.")
+(defn get-cached-character
+  [realm-name char-name]
+  (first (select ents/character
+                 (with ents/realm)
+                 (where {:Realm.RName realm-name,
+                         :CName char-name})
+                 (limit 1))))
 
-(defn get-character-info
-  "Get character info from the B.net API"
-  ([{realm "ownerRealm", pname "owner"}]
-     (get-character-info realm pname))
-  ([realm pname]
-     (http/get (str "https://us.api.battle.net/wow/character/" realm "/" pname)
-               {:query-params {:apikey api-key,
-                               :locale locale}})))
+(defn insert-character!
+  [character]
+  (try
+    (insert ents/character
+            (values character))
 
-(defn character-info-or-scrublord
-  "Fetches character data (already deref'd) or returns a map with race -1 to
-  indicate scrublord."
-  [{realm "ownerRealm", pname "owner"}]
-  (timbre/debug (str "trying: " pname "-" realm))
-  (let [response @(get-character-info realm pname)
-        char-info (-> response :body json/read-str)]
-    (timbre/debug char-info)
-    (cond
-     (empty? char-info) {"realm" realm, "name" pname, "race" -2} ; missingno
-     (= (get char-info "status") "nok") {"realm" realm, "name" pname, "race" -1} ; scrublord
-     (not= (get char-info "name") pname) (assoc char-info "name" pname) ; character has been renamed but auction still has old name
-     :else char-info)))
+    (catch java.sql.SQLException e ; bad form to just skip like this, but we've
+                                   ; had too many problems with it for me to
+                                   ; care
+      (timbre/debugf e "Skipping insertion of %s" character))))
 
-(defn get-new-character-data
-  [auction-data]
-  (let [unique-characters (->> auction-data
-                               (map #(select-keys % ["owner" "ownerRealm"]))
-                               distinct)
-        new-characters (filter #(empty? (get-cached-character %)) unique-characters)]
-    (timbre/infof "%d new characters" (count new-characters))
-    (->> new-characters
-         (map character-info-or-scrublord)
-         (map #(realm-name->id "realm" %)))))
+(def without-existing
+  (partial filter (fn [{realm :realm, name :name}]
+                    (nil? (get-cached-character realm name)))))
+
+(defn fetch-characters
+  [characters]
+  (let [c (async/chan (async/buffer (count characters))),]
+    (go (doseq [{realm :realm, name :name} characters]
+          (>! c (get-character realm name)))
+        (async/close! c))
+    c))
+
+(defn insert-characters!
+  [channel]
+  (go-loop [c channel]
+    (insert-character (<! c))
+    (recur c)))
+
+(defn auctions->character-info
+  [auctions]
+  (map (fn [{name :owner, realm :ownerRealm}]
+         {:name name, :realm realm})))
 
 (defn update-characters!
-  [auction-data]
-  (doseq [character (get-new-character-data auction-data)]
-    (timbre/debugf "Inserting: %s" character)
-    (insert-character character)))
+  [auctions]
+  (-> auctions
+    auctions->character-info
+    without-existing
+    fetch-characters
+    insert-characters!))
+
+;; (defstmt get-characters db-info
+;;   "SELECT CName, Race, RName FROM PCharacter
+;;   NATURAL JOIN Realm
+;;   WHERE RName = {realm}
+;;     AND CName IN (SELECT CName FROM Listing WHERE Active = 1 AND Listing.RealmID = Realm.RealmID)
+;;   ORDER BY CName
+;;   LIMIT {start}, 100;"
+;;   :query? true)
+
+;; (defstmt get-character-listings db-info
+;;   "SELECT IName, Quantity, TimeLeft, BidPrice, BuyPricePerItem,
+;;           BuyPricePerItem * Quantity AS BuyPrice
+;;   FROM Listing
+;;   NATURAL JOIN Item
+;;   NATURAL JOIN Realm
+;;   NATURAL JOIN PCharacter
+;;   WHERE CName = {cname} AND RName = {realm} AND Active = 1;"
+;;   :query? true
+;;   :docstring "Returns a character's current auctions")
+
+;; (defstmt get-character-overview db-info
+;;   "SELECT CName, Race, RName,
+;;           COUNT(ListID) AS NumListings,
+;;           SUM(BuyPricePerItem * Quantity) AS Valuation
+;;    FROM Listing
+;;    NATURAL JOIN Realm
+;;    NATURAL JOIN PCharacter
+;;    WHERE CName = {cname} AND RName = {realm} AND Active = 1;"
+;;   :query? true
+;;   :docstring "Gets values for the character overview panel.")
+
+;; (defn get-new-character-data
+;;   [auction-data]
+;;   (let [unique-characters (->> auction-data
+;;                                (map #(select-keys % ["owner" "ownerRealm"]))
+;;                                distinct)
+;;         new-characters (filter #(empty? (get-cached-character %)) unique-characters)]
+;;     (timbre/infof "%d new characters" (count new-characters))
+;;     (->> new-characters
+;;          (map character-info-or-scrublord)
+;;          (map #(realm-name->id "realm" %)))))
+
+;; (defn update-characters!
+;;   [auction-data]
+;;   (doseq [character (get-new-character-data auction-data)]
+;;     (timbre/debugf "Inserting: %s" character)
+;;     (insert-character character)))
