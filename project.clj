@@ -12,7 +12,8 @@
                  [mysql/mysql-connector-java "5.1.25"]
                  [http-kit "2.1.16"]
                  [com.taoensso/timbre "3.3.1" :exclusions [org.clojure/tools.reader]]
-                 [clj-time "0.6.0"]]
+                 [clj-time "0.6.0"]
+                 [korma "0.4.1-LOCAL"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler databases-project.handler/app
          :port 3000}
