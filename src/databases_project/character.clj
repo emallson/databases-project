@@ -7,7 +7,7 @@
             [databases-project.macros :refer [defstmt]]
             [databases-project.realm :refer [realm-name->id]]))
 
-(def Race-ids
+(def race-ids
   {1 "Human"
    2 "Orc"
    3 "Dwarf"
@@ -24,7 +24,7 @@
    26 "Horde Pandaren"
    -1 "Scrublord"
    })
-(defn id->Race-name
+(defn id->race-name
   [key character]
   (assoc character :race
       (Race-ids (get character key))))
