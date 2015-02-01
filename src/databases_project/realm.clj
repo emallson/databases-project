@@ -3,10 +3,16 @@
             [korma.core :as korma :refer :all]
             [databases-project.entities :as ents]))
 
-(defn realm-name->id
+(defn get-realm-id
   "Given a realm name, returns its id."
   [name]
   (-> (select ents/realm
               (fields :RealmID)
-              (where {:RName name}))
-    first :RealmID))
+              (where {:RName name})
+              (limit 1))
+      first :RealmID))
+
+(defn realm-name->id
+  [auction]
+  (assoc auction :ownerRealm
+         (get-realm-id (:ownerRealm auction))))

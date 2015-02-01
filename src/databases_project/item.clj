@@ -64,11 +64,12 @@
 
 (defn insert-item!
   [item]
+  (timbre/debugf "Attempting insertion of %s" item)
   (insert ents/item
           (values item)))
 
 (def without-existing
-  (partial filter (fn [{item-id :item}]
+  (partial filter (fn [{item-id :id}]
                     (empty? (get-cached-items item-id)))))
 
 (defn fetch-items
@@ -82,8 +83,9 @@
 (defn insert-items!
   [channel]
   (go-loop [c channel]
-    (doall (map insert-item! (<! c)))
-    (recur c)))
+    (when-let [item (<! c)]
+      (insert-item! item)
+      (recur c))))
 
 (def context-numbers?
   {3 "raid-normal",
@@ -94,27 +96,29 @@
 (defn acontext->context
   "Translates the context field on an auction into a value matching the foreign
   key to Item. This is done with a best guess and may not be 100% accurate."
-  [item-id acontext]
+  [{item-id :item, acontext :context, :as auction}]
   (if-let [contexts (->> (get-cached-items item-id)
                       (map :Context)
                       (into #{}))]
-    (cond
-      (= (count contexts) 1) (first contexts)
+    (let [context (cond
+                    (= (count contexts) 1) (first contexts)
 
-      (and (contains? context-numbers? acontext)
-           (contains? contexts (context-numbers? acontext))) (context-numbers? acontext)
+                    (and (contains? context-numbers? acontext)
+                         (contains? contexts (context-numbers? acontext))) (context-numbers? acontext)
 
-           :else (first contexts))))
+                         :else (first contexts))]
+      (assoc auction :context context))))
 
 (defn auctions->item-info
   [auctions]
-  (map (fn [{item-id :item, acontext :context} auction]
-         {:id item-id})))
+  (map (fn [{item-id :item, acontext :context}]
+         {:id item-id}) auctions))
 
 (defn update-items!
   [auctions]
   (-> auctions
     auctions->item-info
+    distinct
     without-existing
     fetch-items
     insert-items!))

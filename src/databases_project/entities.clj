@@ -6,7 +6,7 @@
 
 (defdb local-db (mysql {:db "wow-ah"
                         :user "root"
-                        :password "toor"}))
+                        :password ""}))
 
 (defentity realm
   (pk :RealmID)

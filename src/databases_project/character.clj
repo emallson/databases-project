@@ -5,7 +5,7 @@
             [databases-project.api :as api]
             [korma.core :as korma :refer :all]
             [clj-http.client :as http]
-            [databases-project.realm :refer [realm-name->id]]))
+            [databases-project.realm :refer [get-realm-id]]))
 
 (def race-ids
   {1 "Human"
@@ -30,7 +30,7 @@
   [character]
   {:CName (character :name)
    :Race (character :race)
-   :RealmID (realm-name->id (character :realm))})
+   :RealmID (get-realm-id (character :realm))})
 
 (def character-url
   "Produces a url for the character"
@@ -53,6 +53,7 @@
 
 (defn insert-character!
   [character]
+  (timbre/debugf "Attempting insertion of %s" character)
   (try
     (insert ents/character
             (values character))
@@ -77,18 +78,20 @@
 (defn insert-characters!
   [channel]
   (go-loop [c channel]
-    (insert-character (<! c))
-    (recur c)))
+    (when-let [character (<! c)]
+      (insert-character! character)
+      (recur c))))
 
 (defn auctions->character-info
   [auctions]
   (map (fn [{name :owner, realm :ownerRealm}]
-         {:name name, :realm realm})))
+         {:name name, :realm realm}) auctions))
 
 (defn update-characters!
   [auctions]
   (-> auctions
     auctions->character-info
+    distinct
     without-existing
     fetch-characters
     insert-characters!))
@@ -133,7 +136,7 @@
 ;;     (timbre/infof "%d new characters" (count new-characters))
 ;;     (->> new-characters
 ;;          (map character-info-or-scrublord)
-;;          (map #(realm-name->id "realm" %)))))
+;;          (map #(get-realm-id "realm" %)))))
 
 ;; (defn update-characters!
 ;;   [auction-data]
