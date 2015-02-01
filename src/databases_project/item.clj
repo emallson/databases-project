@@ -100,14 +100,13 @@
   (if-let [contexts (->> (get-cached-items item-id)
                       (map :Context)
                       (into #{}))]
-    (let [context (cond
-                    (= (count contexts) 1) (first contexts)
+    (cond
+      (= (count contexts) 1) (first contexts)
 
-                    (and (contains? context-numbers? acontext)
-                         (contains? contexts (context-numbers? acontext))) (context-numbers? acontext)
+      (and (contains? context-numbers? acontext)
+           (contains? contexts (context-numbers? acontext))) (context-numbers? acontext)
 
-                         :else (first contexts))]
-      (assoc auction :context context))))
+      :else (first contexts))))
 
 (defn auctions->item-info
   [auctions]

@@ -15,11 +15,12 @@
                  [com.taoensso/timbre "3.3.1" :exclusions [org.clojure/tools.reader]]
                  [clj-time "0.6.0"]
                  [throttler "1.0.0"]
-                 [korma "0.4.1-LOCAL"]]
+                 [korma "0.4.1-LOCAL"]
+                 [robert/hooke "1.3.0"]]
   :plugins [[lein-ring "0.8.12"]]
   :ring {:handler databases-project.handler/app
          :port 3000}
-  :main databases-project.scraper
+  :main databases-project.main
   :source-paths ["src"]
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                                   [ring-mock "0.1.5"]]}

@@ -5,7 +5,6 @@
 
 (def update-times (atom {}))
 
-
 (defn -main
   [& realms]
   (defonce debug-server (start-server :port 3131))

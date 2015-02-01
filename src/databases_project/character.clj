@@ -5,7 +5,7 @@
             [databases-project.api :as api]
             [korma.core :as korma :refer :all]
             [clj-http.client :as http]
-            [databases-project.realm :refer [get-realm-id]]))
+            [databases-project.realm :refer [realm-name->id]]))
 
 (def race-ids
   {1 "Human"
@@ -30,7 +30,7 @@
   [character]
   {:CName (character :name)
    :Race (character :race)
-   :RealmID (get-realm-id (character :realm))})
+   :RealmID (realm-name->id (character :realm))})
 
 (def character-url
   "Produces a url for the character"

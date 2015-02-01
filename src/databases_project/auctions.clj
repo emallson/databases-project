@@ -8,9 +8,10 @@
             [clj-time.core :as time]
             [clj-time.format :as tf]
             [clj-time.coerce :as tc]
-            [databases-project.realm :refer [realm-name->id get-realm-id]]
+            [databases-project.realm :refer [realm-name->id]]
             [databases-project.character :refer [update-characters!]]
-            [databases-project.item :refer [update-items! acontext->context]]))
+            [databases-project.item :refer [update-items! acontext->context]]
+            [jmglov.upsert]))
 
 ;; (ns databases-project.auctions
 ;;   (:require [org.httpkit.client :as http]
@@ -106,9 +107,8 @@
 ;;          (time-left-ids (get auction key))))
 
 (defn time-left->id
-  [auction]
-  (assoc auction :timeLeft
-         (time-left-ids (:timeLeft auction))))
+  [time-left]
+  (time-left-ids time-left))
 
 ;; (defn post-date->fmt
 ;;   [key auction]
@@ -117,8 +117,7 @@
 
 (defn post-date->fmt
   [auction]
-  (assoc auction :postDate
-         (tf/unparse (tf/formatters :mysql) (tc/from-long (:postDate auction)))))
+  (tf/unparse (tf/formatters :mysql) (tc/from-long (:postDate auction))))
 
 ;; (def filter-???
 ;;   "Filters all auctions with ??? as their realm. These are auctions posted by
@@ -145,8 +144,12 @@
 
 (defn insert-auctions!
   [auctions]
-  (insert ents/listing
-          (values auctions)))
+  (-> (insert* ents/listing)
+      (values auctions)
+      (assoc :upsert {:BidPrice :BidPrice
+                      :TimeLeft :TimeLeft
+                      :Active 1})
+      (insert)))
 
 ;; (defstmt deactivate-auctions! db-info
 ;;   "UPDATE Listing SET Active = 0 WHERE RealmID = {:realmid};"
@@ -167,14 +170,29 @@
 ;;                                                (post-date->fmt "postDate")
 ;;                                                (acontext->context))) auction-data)))
 
+(defn reformat-auction
+  [auction]
+  (let [time-left (time-left->id (:timeLeft auction))]
+    {:ListID (:auc auction)
+     :Quantity (:quantity auction)
+     :BuyPrice (:buyout auction)
+     :BuyPricePerItem (/ (:buyout auction)
+                         (:quantity auction))
+     :OriginalBidPrice (:bid auction)
+     :BidPrice (:bid auction)
+     :StartLength time-left
+     :TimeLeft time-left
+     :PostDate (post-date->fmt (:postDate auction))
+     :CName (:owner auction)
+     :RealmID (realm-name->id (:ownerRealm auction))
+     :ItemID (:item auction)
+     :AContext (:context auction)
+     :Active true}))
+
 (defn update-auctions!
   [auction-data]
-  (insert-auctions! (map #(timbre/spy (->> %
-                                           (realm-name->id)
-                                           (time-left->id)
-                                           (post-date->fmt)
-                                           (acontext->context)))
-                         auction-data)))
+  (insert-auctions!
+   (map #(timbre/spy (reformat-auction %)) auction-data)))
 
 (defn update-realm!
   "Checks to see if a realm needs updating and, if so, updates it."
@@ -186,10 +204,14 @@
         (do
           (timbre/infof "File List: %s" file-list)
           (timbre/infof "Beginning update...")
-          (update-characters! auction-data)
-          (update-items! auction-data)
+          ;; this is bad and i feel bad about it
+          ;; abusing <!! to block until the operation completes
+          (let [char-chan (update-characters! auction-data)
+                item-chan (update-items! auction-data)]
+            (async/<!! char-chan)
+            (async/<!! item-chan))
           (timbre/spy
-           (deactivate-auctions! (get-realm-id realm)))
+           (deactivate-auctions! (realm-name->id realm)))
           (update-auctions! auction-data)
           (timbre/infof "Done updating %s" realm)
           (assoc update-times realm
