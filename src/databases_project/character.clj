@@ -69,10 +69,15 @@
 
 (defn fetch-characters
   [characters]
-  (let [c (async/chan (async/buffer (count characters))),]
-    (go (doseq [{realm :realm, name :name} characters]
-          (>! c (get-character realm name)))
-        (async/close! c))
+  (let [c (async/chan (async/buffer (count characters))),
+        info-chan (async/onto-chan (async/chan) characters false)]
+    (go-loop [{realm :realm, name :name, :as character} (<! info-chan)]
+      (when-not (nil? character)
+        (try
+          (>! c (get-character realm name))
+          (catch IllegalArgumentException e  ; get failed with transient error
+            (>! info-chan character)))
+        (recur (<! info-chan))))
     c))
 
 (defn insert-characters!
